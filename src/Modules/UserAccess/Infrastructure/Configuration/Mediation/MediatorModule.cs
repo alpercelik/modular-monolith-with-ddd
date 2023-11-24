@@ -5,7 +5,6 @@ using System.Reflection;
 using Autofac;
 using Autofac.Core;
 using Autofac.Features.Variance;
-using CompanyName.MyMeetings.Modules.UserAccess.Application.Configuration.Commands;
 using FluentValidation;
 using MediatR;
 using MediatR.Pipeline;
