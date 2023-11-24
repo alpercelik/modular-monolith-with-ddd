@@ -5,4 +5,7 @@
     <ItemGroup>
         <Content Include="..\CompanyName.MyMeetings.Database\Structure\**\*.sql" />
     </ItemGroup>
+    <ItemGroup>
+      <PackageReference Update="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
+    </ItemGroup>
 </Project>
