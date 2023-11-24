@@ -1,13 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-
+    <TargetFramework>net8.0</TargetFramework>
     <IsPackable>false</IsPackable>
-
     <Configurations>Debug;Release;Production</Configurations>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Autofac" Version="4.9.2" />
     <PackageReference Include="NetArchTest.Rules" Version="1.2.4" />
@@ -22,12 +18,10 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\BuildingBlocks\Domain\CompanyName.MyMeetings.BuildingBlocks.Domain.csproj" />
     <ProjectReference Include="..\..\Application\CompanyName.MyMeetings.Modules.Meetings.Application.csproj" />
     <ProjectReference Include="..\..\Domain\CompanyName.MyMeetings.Modules.Meetings.Domain.csproj" />
     <ProjectReference Include="..\..\Infrastructure\CompanyName.MyMeetings.Modules.Meetings.Infrastructure.csproj" />
   </ItemGroup>
-
 </Project>

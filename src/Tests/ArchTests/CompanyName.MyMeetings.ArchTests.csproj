@@ -1,13 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-
+    <TargetFramework>net8.0</TargetFramework>
     <IsPackable>false</IsPackable>
-
     <Configurations>Debug;Release;Production</Configurations>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
     <PackageReference Include="NetArchTest.Rules" Version="1.2.4" />
@@ -22,7 +18,6 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\API\CompanyName.MyMeetings.API\CompanyName.MyMeetings.API.csproj" />
     <ProjectReference Include="..\..\Modules\Administration\Application\CompanyName.MyMeetings.Modules.Administration.Application.csproj" />
@@ -42,5 +37,4 @@
     <ProjectReference Include="..\..\Modules\UserAccess\Infrastructure\CompanyName.MyMeetings.Modules.UserAccess.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Modules\UserAccess\IntegrationEvents\CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj" />
   </ItemGroup>
-
 </Project>

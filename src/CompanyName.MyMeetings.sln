@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29613.14
@@ -132,7 +132,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "RequestExamples", "RequestE
 		API\RequestExamples\Users.http = API\RequestExamples\Users.http
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CompanyName.MyMeetings.SUT", "Tests\SUT\CompanyName.MyMeetings.SUT.csproj", "{1853847F-9988-43A1-B3E1-DDBE4B2F3365}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CompanyName.MyMeetings.SUT", "Tests\SUT\CompanyName.MyMeetings.SUT.csproj", "{1853847F-9988-43A1-B3E1-DDBE4B2F3365}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -378,6 +378,7 @@ Global
 		{866A329C-E942-46D1-AF37-BB617F7F4AC2}.Production|Any CPU.ActiveCfg = Release|Any CPU
 		{866A329C-E942-46D1-AF37-BB617F7F4AC2}.Production|Any CPU.Build.0 = Release|Any CPU
 		{866A329C-E942-46D1-AF37-BB617F7F4AC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{866A329C-E942-46D1-AF37-BB617F7F4AC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{165E76B9-DB0C-49B7-B3DC-52DFBEA55A79}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{165E76B9-DB0C-49B7-B3DC-52DFBEA55A79}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{165E76B9-DB0C-49B7-B3DC-52DFBEA55A79}.Production|Any CPU.ActiveCfg = Debug|Any CPU
