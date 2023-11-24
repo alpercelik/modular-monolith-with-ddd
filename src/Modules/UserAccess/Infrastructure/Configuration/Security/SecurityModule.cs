@@ -1,21 +1,20 @@
 ﻿using Autofac;
 
-namespace CompanyName.MyMeetings.Modules.UserAccess.Infrastructure.Configuration.Security
+namespace CompanyName.MyMeetings.Modules.UserAccess.Infrastructure.Configuration.Security;
+
+internal class SecurityModule : Module
 {
-    internal class SecurityModule : Module
+    private readonly string _encryptionKey;
+
+    public SecurityModule(string encryptionKey)
     {
-        private readonly string _encryptionKey;
+        _encryptionKey = encryptionKey;
+    }
 
-        public SecurityModule(string encryptionKey)
-        {
-            _encryptionKey = encryptionKey;
-        }
-
-        protected override void Load(ContainerBuilder builder)
-        {
-            builder.RegisterType<AesDataProtector>()
-                .As<IDataProtector>()
-                .WithParameter("encryptionKey", _encryptionKey);
-        }
+    protected override void Load(ContainerBuilder builder)
+    {
+        builder.RegisterType<AesDataProtector>()
+            .As<IDataProtector>()
+            .WithParameter("encryptionKey", _encryptionKey);
     }
 }

@@ -5,26 +5,25 @@ using CompanyName.MyMeetings.Modules.Meetings.Domain.Meetings;
 using CompanyName.MyMeetings.Modules.Meetings.Domain.Members;
 using MediatR;
 
-namespace CompanyName.MyMeetings.Modules.Meetings.Application.Meetings.CancelMeeting
+namespace CompanyName.MyMeetings.Modules.Meetings.Application.Meetings.CancelMeeting;
+
+internal class CancelMeetingCommandHandler : ICommandHandler<CancelMeetingCommand>
 {
-    internal class CancelMeetingCommandHandler : ICommandHandler<CancelMeetingCommand>
+    private readonly IMeetingRepository _meetingRepository;
+    private readonly IMemberContext _memberContext;
+
+    internal CancelMeetingCommandHandler(IMeetingRepository meetingRepository, IMemberContext memberContext)
     {
-        private readonly IMeetingRepository _meetingRepository;
-        private readonly IMemberContext _memberContext;
+        _meetingRepository = meetingRepository;
+        _memberContext = memberContext;
+    }
 
-        internal CancelMeetingCommandHandler(IMeetingRepository meetingRepository, IMemberContext memberContext)
-        {
-            _meetingRepository = meetingRepository;
-            _memberContext = memberContext;
-        }
+    public async Task<Unit> Handle(CancelMeetingCommand request, CancellationToken cancellationToken)
+    {
+        var meeting = await _meetingRepository.GetByIdAsync(new MeetingId(request.MeetingId));
 
-        public async Task<Unit> Handle(CancelMeetingCommand request, CancellationToken cancellationToken)
-        {
-            var meeting = await _meetingRepository.GetByIdAsync(new MeetingId(request.MeetingId));
+        meeting.Cancel(_memberContext.MemberId);
 
-            meeting.Cancel(_memberContext.MemberId);
-
-            return Unit.Value;
-        }
+        return Unit.Value;
     }
 }

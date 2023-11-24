@@ -1,9 +1,8 @@
-﻿namespace CompanyName.MyMeetings.Modules.Payments.Application.PriceListItems.GetPriceListItem
-{
-    public class PriceListItemMoneyValueDto
-    {
-        public decimal Value { get; set; }
+﻿namespace CompanyName.MyMeetings.Modules.Payments.Application.PriceListItems.GetPriceListItem;
 
-        public string Currency { get; set; }
-    }
+public class PriceListItemMoneyValueDto
+{
+    public decimal Value { get; set; }
+
+    public string Currency { get; set; }
 }

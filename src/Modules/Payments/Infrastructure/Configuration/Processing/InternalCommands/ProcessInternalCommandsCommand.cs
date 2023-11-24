@@ -1,8 +1,7 @@
 ﻿using CompanyName.MyMeetings.Modules.Payments.Application.Contracts;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Infrastructure.Configuration.Processing.InternalCommands
+namespace CompanyName.MyMeetings.Modules.Payments.Infrastructure.Configuration.Processing.InternalCommands;
+
+internal class ProcessInternalCommandsCommand : CommandBase, IRecurringCommand
 {
-    internal class ProcessInternalCommandsCommand : CommandBase, IRecurringCommand
-    {
-    }
 }

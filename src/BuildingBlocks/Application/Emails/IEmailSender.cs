@@ -1,7 +1,6 @@
-﻿namespace CompanyName.MyMeetings.BuildingBlocks.Application.Emails
+﻿namespace CompanyName.MyMeetings.BuildingBlocks.Application.Emails;
+
+public interface IEmailSender
 {
-    public interface IEmailSender
-    {
-        void SendEmail(EmailMessage message);
-    }
+    void SendEmail(EmailMessage message);
 }

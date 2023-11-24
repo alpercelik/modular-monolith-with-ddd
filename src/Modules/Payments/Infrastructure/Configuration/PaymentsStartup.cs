@@ -23,91 +23,90 @@ using CompanyName.MyMeetings.Modules.Payments.Infrastructure.Configuration.Quart
 using Serilog.AspNetCore;
 using ILogger = Serilog.ILogger;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Infrastructure.Configuration
+namespace CompanyName.MyMeetings.Modules.Payments.Infrastructure.Configuration;
+
+public class PaymentsStartup
 {
-    public class PaymentsStartup
+    private static IContainer _container;
+
+    private static SubscriptionsManager _subscriptionsManager;
+
+    public static void Initialize(
+        string connectionString,
+        IExecutionContextAccessor executionContextAccessor,
+        ILogger logger,
+        EmailsConfiguration emailsConfiguration,
+        IEventsBus eventsBus,
+        bool runQuartz = true,
+        long? internalProcessingPoolingInterval = null)
     {
-        private static IContainer _container;
+        var moduleLogger = logger.ForContext("Module", "Payments");
 
-        private static SubscriptionsManager _subscriptionsManager;
+        ConfigureCompositionRoot(connectionString, executionContextAccessor, moduleLogger, emailsConfiguration, eventsBus, runQuartz);
 
-        public static void Initialize(
-            string connectionString,
-            IExecutionContextAccessor executionContextAccessor,
-            ILogger logger,
-            EmailsConfiguration emailsConfiguration,
-            IEventsBus eventsBus,
-            bool runQuartz = true,
-            long? internalProcessingPoolingInterval = null)
+        if (runQuartz)
         {
-            var moduleLogger = logger.ForContext("Module", "Payments");
-
-            ConfigureCompositionRoot(connectionString, executionContextAccessor, moduleLogger, emailsConfiguration, eventsBus, runQuartz);
-
-            if (runQuartz)
-            {
-                QuartzStartup.Initialize(moduleLogger, internalProcessingPoolingInterval);
-            }
-
-            EventsBusStartup.Initialize(moduleLogger);
+            QuartzStartup.Initialize(moduleLogger, internalProcessingPoolingInterval);
         }
 
-        public static void Stop()
+        EventsBusStartup.Initialize(moduleLogger);
+    }
+
+    public static void Stop()
+    {
+        _subscriptionsManager.Stop();
+        QuartzStartup.StopQuartz();
+    }
+
+    private static void ConfigureCompositionRoot(
+        string connectionString,
+        IExecutionContextAccessor executionContextAccessor,
+        ILogger logger,
+        EmailsConfiguration emailsConfiguration,
+        IEventsBus eventsBus,
+        bool runQuartz = true)
+    {
+        var containerBuilder = new ContainerBuilder();
+
+        containerBuilder.RegisterModule(new LoggingModule(logger));
+
+        var loggerFactory = new SerilogLoggerFactory(logger);
+        containerBuilder.RegisterModule(new DataAccessModule(connectionString, loggerFactory));
+
+        containerBuilder.RegisterModule(new ProcessingModule());
+        containerBuilder.RegisterModule(new EmailModule(emailsConfiguration));
+        containerBuilder.RegisterModule(new EventsBusModule(eventsBus));
+        containerBuilder.RegisterModule(new MediatorModule());
+        containerBuilder.RegisterModule(new AuthenticationModule());
+
+        BiDictionary<string, Type> domainNotificationsMap = new BiDictionary<string, Type>();
+        domainNotificationsMap.Add("MeetingFeePaidNotification", typeof(MeetingFeePaidNotification));
+        domainNotificationsMap.Add("MeetingFeePaymentPaidNotification", typeof(MeetingFeePaymentPaidNotification));
+        domainNotificationsMap.Add("SubscriptionCreatedNotification", typeof(SubscriptionCreatedNotification));
+        domainNotificationsMap.Add("SubscriptionPaymentPaidNotification", typeof(SubscriptionPaymentPaidNotification));
+        domainNotificationsMap.Add("SubscriptionRenewalPaymentPaidNotification", typeof(SubscriptionRenewalPaymentPaidNotification));
+        domainNotificationsMap.Add("SubscriptionRenewedNotification", typeof(SubscriptionRenewedNotification));
+
+        containerBuilder.RegisterModule(new OutboxModule(domainNotificationsMap));
+
+        if (runQuartz)
         {
-            _subscriptionsManager.Stop();
-            QuartzStartup.StopQuartz();
+            containerBuilder.RegisterModule(new QuartzModule());
         }
 
-        private static void ConfigureCompositionRoot(
-            string connectionString,
-            IExecutionContextAccessor executionContextAccessor,
-            ILogger logger,
-            EmailsConfiguration emailsConfiguration,
-            IEventsBus eventsBus,
-            bool runQuartz = true)
-        {
-            var containerBuilder = new ContainerBuilder();
+        containerBuilder.RegisterInstance(executionContextAccessor);
 
-            containerBuilder.RegisterModule(new LoggingModule(logger));
+        _container = containerBuilder.Build();
 
-            var loggerFactory = new SerilogLoggerFactory(logger);
-            containerBuilder.RegisterModule(new DataAccessModule(connectionString, loggerFactory));
+        PaymentsCompositionRoot.SetContainer(_container);
 
-            containerBuilder.RegisterModule(new ProcessingModule());
-            containerBuilder.RegisterModule(new EmailModule(emailsConfiguration));
-            containerBuilder.RegisterModule(new EventsBusModule(eventsBus));
-            containerBuilder.RegisterModule(new MediatorModule());
-            containerBuilder.RegisterModule(new AuthenticationModule());
+        RunEventsProjectors();
+    }
 
-            BiDictionary<string, Type> domainNotificationsMap = new BiDictionary<string, Type>();
-            domainNotificationsMap.Add("MeetingFeePaidNotification", typeof(MeetingFeePaidNotification));
-            domainNotificationsMap.Add("MeetingFeePaymentPaidNotification", typeof(MeetingFeePaymentPaidNotification));
-            domainNotificationsMap.Add("SubscriptionCreatedNotification", typeof(SubscriptionCreatedNotification));
-            domainNotificationsMap.Add("SubscriptionPaymentPaidNotification", typeof(SubscriptionPaymentPaidNotification));
-            domainNotificationsMap.Add("SubscriptionRenewalPaymentPaidNotification", typeof(SubscriptionRenewalPaymentPaidNotification));
-            domainNotificationsMap.Add("SubscriptionRenewedNotification", typeof(SubscriptionRenewedNotification));
+    private static void RunEventsProjectors()
+    {
+        _subscriptionsManager = _container.Resolve<SubscriptionsManager>();
 
-            containerBuilder.RegisterModule(new OutboxModule(domainNotificationsMap));
-
-            if (runQuartz)
-            {
-                containerBuilder.RegisterModule(new QuartzModule());
-            }
-
-            containerBuilder.RegisterInstance(executionContextAccessor);
-
-            _container = containerBuilder.Build();
-
-            PaymentsCompositionRoot.SetContainer(_container);
-
-            RunEventsProjectors();
-        }
-
-        private static void RunEventsProjectors()
-        {
-            _subscriptionsManager = _container.Resolve<SubscriptionsManager>();
-
-            _subscriptionsManager.Start();
-        }
+        _subscriptionsManager.Start();
     }
 }

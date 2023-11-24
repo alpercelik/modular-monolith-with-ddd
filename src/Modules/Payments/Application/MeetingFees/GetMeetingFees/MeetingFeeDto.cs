@@ -1,19 +1,18 @@
 ﻿using System;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Application.MeetingFees.GetMeetingFees
+namespace CompanyName.MyMeetings.Modules.Payments.Application.MeetingFees.GetMeetingFees;
+
+public class MeetingFeeDto
 {
-    public class MeetingFeeDto
-    {
-        public Guid MeetingFeeId { get; }
+    public Guid MeetingFeeId { get; }
 
-        public Guid PayerId { get; }
+    public Guid PayerId { get; }
 
-        public Guid MeetingId { get; }
+    public Guid MeetingId { get; }
 
-        public decimal FeeValue { get; }
+    public decimal FeeValue { get; }
 
-        public string FeeCurrency { get; }
+    public string FeeCurrency { get; }
 
-        public string Status { get; }
-    }
+    public string Status { get; }
 }

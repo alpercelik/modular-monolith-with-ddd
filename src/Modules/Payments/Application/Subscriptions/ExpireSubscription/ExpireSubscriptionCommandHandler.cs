@@ -5,26 +5,25 @@ using CompanyName.MyMeetings.Modules.Payments.Domain.SeedWork;
 using CompanyName.MyMeetings.Modules.Payments.Domain.Subscriptions;
 using MediatR;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Application.Subscriptions.ExpireSubscription
+namespace CompanyName.MyMeetings.Modules.Payments.Application.Subscriptions.ExpireSubscription;
+
+internal class ExpireSubscriptionCommandHandler : ICommandHandler<ExpireSubscriptionCommand>
 {
-    internal class ExpireSubscriptionCommandHandler : ICommandHandler<ExpireSubscriptionCommand>
+    private readonly IAggregateStore _aggregateStore;
+
+    public ExpireSubscriptionCommandHandler(IAggregateStore aggregateStore)
     {
-        private readonly IAggregateStore _aggregateStore;
+        _aggregateStore = aggregateStore;
+    }
 
-        public ExpireSubscriptionCommandHandler(IAggregateStore aggregateStore)
-        {
-            _aggregateStore = aggregateStore;
-        }
+    public async Task<Unit> Handle(ExpireSubscriptionCommand command, CancellationToken cancellationToken)
+    {
+        var subscription = await _aggregateStore.Load(new SubscriptionId(command.SubscriptionId));
 
-        public async Task<Unit> Handle(ExpireSubscriptionCommand command, CancellationToken cancellationToken)
-        {
-            var subscription = await _aggregateStore.Load(new SubscriptionId(command.SubscriptionId));
+        subscription.Expire();
 
-            subscription.Expire();
+        _aggregateStore.AppendChanges(subscription);
 
-            _aggregateStore.AppendChanges(subscription);
-
-            return Unit.Value;
-        }
+        return Unit.Value;
     }
 }

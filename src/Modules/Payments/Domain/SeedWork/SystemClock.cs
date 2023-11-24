@@ -1,26 +1,25 @@
 ﻿using System;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Domain.SeedWork
+namespace CompanyName.MyMeetings.Modules.Payments.Domain.SeedWork;
+
+public static class SystemClock
 {
-    public static class SystemClock
+    private static DateTime? _customDate;
+
+    public static DateTime Now
     {
-        private static DateTime? _customDate;
-
-        public static DateTime Now
+        get
         {
-            get
+            if (_customDate.HasValue)
             {
-                if (_customDate.HasValue)
-                {
-                    return _customDate.Value;
-                }
-
-                return DateTime.UtcNow;
+                return _customDate.Value;
             }
+
+            return DateTime.UtcNow;
         }
-
-        public static void Set(DateTime customDate) => _customDate = customDate;
-
-        public static void Reset() => _customDate = null;
     }
+
+    public static void Set(DateTime customDate) => _customDate = customDate;
+
+    public static void Reset() => _customDate = null;
 }

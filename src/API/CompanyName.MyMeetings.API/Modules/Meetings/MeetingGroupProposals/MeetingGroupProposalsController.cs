@@ -9,54 +9,53 @@ using CompanyName.MyMeetings.Modules.Meetings.Application.MeetingGroupProposals.
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CompanyName.MyMeetings.API.Modules.Meetings.MeetingGroupProposals
+namespace CompanyName.MyMeetings.API.Modules.Meetings.MeetingGroupProposals;
+
+[Route("api/meetings/[controller]")]
+[ApiController]
+public class MeetingGroupProposalsController : ControllerBase
 {
-    [Route("api/meetings/[controller]")]
-    [ApiController]
-    public class MeetingGroupProposalsController : ControllerBase
+    private readonly IMeetingsModule _meetingsModule;
+
+    public MeetingGroupProposalsController(IMeetingsModule meetingsModule)
     {
-        private readonly IMeetingsModule _meetingsModule;
+        _meetingsModule = meetingsModule;
+    }
 
-        public MeetingGroupProposalsController(IMeetingsModule meetingsModule)
-        {
-            _meetingsModule = meetingsModule;
-        }
+    [HttpGet("")]
+    [HasPermission(MeetingsPermissions.GetMeetingGroupProposals)]
+    [ProducesResponseType(typeof(List<MeetingGroupProposalDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetMemberMeetingGroupProposals()
+    {
+        var meetingGroupProposals = await _meetingsModule.ExecuteQueryAsync(
+            new GetMemberMeetingGroupProposalsQuery());
 
-        [HttpGet("")]
-        [HasPermission(MeetingsPermissions.GetMeetingGroupProposals)]
-        [ProducesResponseType(typeof(List<MeetingGroupProposalDto>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetMemberMeetingGroupProposals()
-        {
-            var meetingGroupProposals = await _meetingsModule.ExecuteQueryAsync(
-                new GetMemberMeetingGroupProposalsQuery());
+        return Ok(meetingGroupProposals);
+    }
 
-            return Ok(meetingGroupProposals);
-        }
+    [HttpGet("all")]
+    [HasPermission(MeetingsPermissions.GetMeetingGroupProposals)]
+    [ProducesResponseType(typeof(List<MeetingGroupProposalDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAllMeetingGroupProposals(int? page, int? perPage)
+    {
+        var meetingGroupProposals = await _meetingsModule.ExecuteQueryAsync(
+            new GetAllMeetingGroupProposalsQuery(page, perPage));
 
-        [HttpGet("all")]
-        [HasPermission(MeetingsPermissions.GetMeetingGroupProposals)]
-        [ProducesResponseType(typeof(List<MeetingGroupProposalDto>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetAllMeetingGroupProposals(int? page, int? perPage)
-        {
-            var meetingGroupProposals = await _meetingsModule.ExecuteQueryAsync(
-                new GetAllMeetingGroupProposalsQuery(page, perPage));
+        return Ok(meetingGroupProposals);
+    }
 
-            return Ok(meetingGroupProposals);
-        }
+    [HttpPost("")]
+    [HasPermission(MeetingsPermissions.ProposeMeetingGroup)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> ProposeMeetingGroup(ProposeMeetingGroupRequest request)
+    {
+        await _meetingsModule.ExecuteCommandAsync(
+            new ProposeMeetingGroupCommand(
+                request.Name,
+                request.Description,
+                request.LocationCity,
+                request.LocationCountryCode));
 
-        [HttpPost("")]
-        [HasPermission(MeetingsPermissions.ProposeMeetingGroup)]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> ProposeMeetingGroup(ProposeMeetingGroupRequest request)
-        {
-            await _meetingsModule.ExecuteCommandAsync(
-                new ProposeMeetingGroupCommand(
-                    request.Name,
-                    request.Description,
-                    request.LocationCity,
-                    request.LocationCountryCode));
-
-            return Ok();
-        }
+        return Ok();
     }
 }

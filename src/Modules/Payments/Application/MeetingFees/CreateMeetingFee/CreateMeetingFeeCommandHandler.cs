@@ -6,28 +6,27 @@ using CompanyName.MyMeetings.Modules.Payments.Domain.MeetingFees;
 using CompanyName.MyMeetings.Modules.Payments.Domain.Payers;
 using CompanyName.MyMeetings.Modules.Payments.Domain.SeedWork;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Application.MeetingFees.CreateMeetingFee
+namespace CompanyName.MyMeetings.Modules.Payments.Application.MeetingFees.CreateMeetingFee;
+
+internal class CreateMeetingFeeCommandHandler : ICommandHandler<CreateMeetingFeeCommand, Guid>
 {
-    internal class CreateMeetingFeeCommandHandler : ICommandHandler<CreateMeetingFeeCommand, Guid>
+    private readonly IAggregateStore _aggregateStore;
+
+    internal CreateMeetingFeeCommandHandler(
+        IAggregateStore aggregateStore)
     {
-        private readonly IAggregateStore _aggregateStore;
+        _aggregateStore = aggregateStore;
+    }
 
-        internal CreateMeetingFeeCommandHandler(
-            IAggregateStore aggregateStore)
-        {
-            _aggregateStore = aggregateStore;
-        }
+    public Task<Guid> Handle(CreateMeetingFeeCommand command, CancellationToken cancellationToken)
+    {
+        var meetingFee = MeetingFee.Create(
+            new PayerId(command.PayerId),
+            new MeetingId(command.MeetingId),
+            MoneyValue.Of(command.Value, command.Currency));
 
-        public Task<Guid> Handle(CreateMeetingFeeCommand command, CancellationToken cancellationToken)
-        {
-            var meetingFee = MeetingFee.Create(
-                new PayerId(command.PayerId),
-                new MeetingId(command.MeetingId),
-                MoneyValue.Of(command.Value, command.Currency));
+        _aggregateStore.AppendChanges(meetingFee);
 
-            _aggregateStore.AppendChanges(meetingFee);
-
-            return Task.FromResult(meetingFee.Id);
-        }
+        return Task.FromResult(meetingFee.Id);
     }
 }

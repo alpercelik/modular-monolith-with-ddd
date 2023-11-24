@@ -5,48 +5,47 @@ using CompanyName.MyMeetings.BuildingBlocks.Application.Data;
 using CompanyName.MyMeetings.BuildingBlocks.Application.Outbox;
 using Dapper;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Infrastructure.AggregateStore
+namespace CompanyName.MyMeetings.Modules.Payments.Infrastructure.AggregateStore;
+
+public class SqlOutboxAccessor : IOutbox
 {
-    public class SqlOutboxAccessor : IOutbox
+    private readonly ISqlConnectionFactory _sqlConnectionFactory;
+
+    private readonly List<OutboxMessage> _messages;
+
+    public SqlOutboxAccessor(ISqlConnectionFactory sqlConnectionFactory)
     {
-        private readonly ISqlConnectionFactory _sqlConnectionFactory;
+        _sqlConnectionFactory = sqlConnectionFactory;
+        _messages = new List<OutboxMessage>();
+    }
 
-        private readonly List<OutboxMessage> _messages;
+    public void Add(OutboxMessage message)
+    {
+        _messages.Add(message);
+    }
 
-        public SqlOutboxAccessor(ISqlConnectionFactory sqlConnectionFactory)
+    public async Task Save()
+    {
+        if (_messages.Any())
         {
-            _sqlConnectionFactory = sqlConnectionFactory;
-            _messages = new List<OutboxMessage>();
-        }
+            using var connection = _sqlConnectionFactory.CreateNewConnection();
 
-        public void Add(OutboxMessage message)
-        {
-            _messages.Add(message);
-        }
+            const string sql = "INSERT INTO [payments].[OutboxMessages] " +
+                               "([Id], [OccurredOn], [Type], [Data]) VALUES " +
+                               "(@Id, @OccurredOn, @Type, @Data)";
 
-        public async Task Save()
-        {
-            if (_messages.Any())
+            foreach (var message in _messages)
             {
-                using var connection = _sqlConnectionFactory.CreateNewConnection();
-
-                const string sql = "INSERT INTO [payments].[OutboxMessages] " +
-                                   "([Id], [OccurredOn], [Type], [Data]) VALUES " +
-                                   "(@Id, @OccurredOn, @Type, @Data)";
-
-                foreach (var message in _messages)
+                await connection.ExecuteScalarAsync(sql, new
                 {
-                    await connection.ExecuteScalarAsync(sql, new
-                    {
-                        message.Id,
-                        message.OccurredOn,
-                        message.Type,
-                        message.Data
-                    });
-                }
-
-                _messages.Clear();
+                    message.Id,
+                    message.OccurredOn,
+                    message.Type,
+                    message.Data
+                });
             }
+
+            _messages.Clear();
         }
     }
 }

@@ -1,19 +1,18 @@
 ﻿using System;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Application.Contracts
+namespace CompanyName.MyMeetings.Modules.Payments.Application.Contracts;
+
+public abstract class QueryBase<TResult> : IQuery<TResult>
 {
-    public abstract class QueryBase<TResult> : IQuery<TResult>
+    public Guid Id { get; }
+
+    protected QueryBase()
     {
-        public Guid Id { get; }
+        this.Id = Guid.NewGuid();
+    }
 
-        protected QueryBase()
-        {
-            this.Id = Guid.NewGuid();
-        }
-
-        protected QueryBase(Guid id)
-        {
-            this.Id = id;
-        }
+    protected QueryBase(Guid id)
+    {
+        this.Id = id;
     }
 }

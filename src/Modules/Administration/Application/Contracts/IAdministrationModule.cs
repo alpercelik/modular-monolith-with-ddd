@@ -1,13 +1,12 @@
 ﻿using System.Threading.Tasks;
 
-namespace CompanyName.MyMeetings.Modules.Administration.Application.Contracts
+namespace CompanyName.MyMeetings.Modules.Administration.Application.Contracts;
+
+public interface IAdministrationModule
 {
-    public interface IAdministrationModule
-    {
-        Task<TResult> ExecuteCommandAsync<TResult>(ICommand<TResult> command);
+    Task<TResult> ExecuteCommandAsync<TResult>(ICommand<TResult> command);
 
-        Task ExecuteCommandAsync(ICommand command);
+    Task ExecuteCommandAsync(ICommand command);
 
-        Task<TResult> ExecuteQueryAsync<TResult>(IQuery<TResult> query);
-    }
+    Task<TResult> ExecuteQueryAsync<TResult>(IQuery<TResult> query);
 }

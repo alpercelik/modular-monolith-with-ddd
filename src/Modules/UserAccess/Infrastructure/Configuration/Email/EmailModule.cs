@@ -2,34 +2,33 @@
 using CompanyName.MyMeetings.BuildingBlocks.Application.Emails;
 using CompanyName.MyMeetings.BuildingBlocks.Infrastructure.Emails;
 
-namespace CompanyName.MyMeetings.Modules.UserAccess.Infrastructure.Configuration.Email
+namespace CompanyName.MyMeetings.Modules.UserAccess.Infrastructure.Configuration.Email;
+
+internal class EmailModule : Module
 {
-    internal class EmailModule : Module
+    private readonly IEmailSender _emailSender;
+    private readonly EmailsConfiguration _configuration;
+
+    public EmailModule(
+        EmailsConfiguration configuration,
+        IEmailSender emailSender)
     {
-        private readonly IEmailSender _emailSender;
-        private readonly EmailsConfiguration _configuration;
+        _configuration = configuration;
+        _emailSender = emailSender;
+    }
 
-        public EmailModule(
-            EmailsConfiguration configuration,
-            IEmailSender emailSender)
+    protected override void Load(ContainerBuilder builder)
+    {
+        if (_emailSender != null)
         {
-            _configuration = configuration;
-            _emailSender = emailSender;
+            builder.RegisterInstance(_emailSender);
         }
-
-        protected override void Load(ContainerBuilder builder)
+        else
         {
-            if (_emailSender != null)
-            {
-                builder.RegisterInstance(_emailSender);
-            }
-            else
-            {
-                builder.RegisterType<EmailSender>()
-                    .As<IEmailSender>()
-                    .WithParameter("configuration", _configuration)
-                    .InstancePerLifetimeScope();
-            }
+            builder.RegisterType<EmailSender>()
+                .As<IEmailSender>()
+                .WithParameter("configuration", _configuration)
+                .InstancePerLifetimeScope();
         }
     }
 }

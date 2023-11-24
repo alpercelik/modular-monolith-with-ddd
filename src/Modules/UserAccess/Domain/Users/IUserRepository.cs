@@ -1,9 +1,8 @@
 ﻿using System.Threading.Tasks;
 
-namespace CompanyName.MyMeetings.Modules.UserAccess.Domain.Users
+namespace CompanyName.MyMeetings.Modules.UserAccess.Domain.Users;
+
+public interface IUserRepository
 {
-    public interface IUserRepository
-    {
-        Task AddAsync(User user);
-    }
+    Task AddAsync(User user);
 }

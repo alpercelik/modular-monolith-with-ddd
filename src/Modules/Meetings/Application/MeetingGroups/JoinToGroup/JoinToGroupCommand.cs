@@ -1,15 +1,14 @@
 ﻿using System;
 using CompanyName.MyMeetings.Modules.Meetings.Application.Contracts;
 
-namespace CompanyName.MyMeetings.Modules.Meetings.Application.MeetingGroups.JoinToGroup
-{
-    public class JoinToGroupCommand : CommandBase
-    {
-        public JoinToGroupCommand(Guid meetingGroupId)
-        {
-            MeetingGroupId = meetingGroupId;
-        }
+namespace CompanyName.MyMeetings.Modules.Meetings.Application.MeetingGroups.JoinToGroup;
 
-        internal Guid MeetingGroupId { get; }
+public class JoinToGroupCommand : CommandBase
+{
+    public JoinToGroupCommand(Guid meetingGroupId)
+    {
+        MeetingGroupId = meetingGroupId;
     }
+
+    internal Guid MeetingGroupId { get; }
 }

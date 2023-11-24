@@ -8,60 +8,59 @@ using CompanyName.MyMeetings.Modules.Administration.Application.Configuration.Co
 using CompanyName.MyMeetings.Modules.Administration.Infrastructure.Configuration.Processing.InternalCommands;
 using MediatR;
 
-namespace CompanyName.MyMeetings.Modules.Administration.Infrastructure.Configuration.Processing
+namespace CompanyName.MyMeetings.Modules.Administration.Infrastructure.Configuration.Processing;
+
+internal class ProcessingModule : Autofac.Module
 {
-    internal class ProcessingModule : Autofac.Module
+    protected override void Load(ContainerBuilder builder)
     {
-        protected override void Load(ContainerBuilder builder)
-        {
-            builder.RegisterType<DomainEventsDispatcher>()
-                .As<IDomainEventsDispatcher>()
-                .InstancePerLifetimeScope();
+        builder.RegisterType<DomainEventsDispatcher>()
+            .As<IDomainEventsDispatcher>()
+            .InstancePerLifetimeScope();
 
-            builder.RegisterType<DomainEventsAccessor>()
-                .As<IDomainEventsAccessor>()
-                .InstancePerLifetimeScope();
+        builder.RegisterType<DomainEventsAccessor>()
+            .As<IDomainEventsAccessor>()
+            .InstancePerLifetimeScope();
 
-            builder.RegisterType<UnitOfWork>()
-                .As<IUnitOfWork>()
-                .InstancePerLifetimeScope();
+        builder.RegisterType<UnitOfWork>()
+            .As<IUnitOfWork>()
+            .InstancePerLifetimeScope();
 
-            builder.RegisterType<CommandsScheduler>()
-                .As<ICommandsScheduler>()
-                .InstancePerLifetimeScope();
+        builder.RegisterType<CommandsScheduler>()
+            .As<ICommandsScheduler>()
+            .InstancePerLifetimeScope();
 
-            builder.RegisterGenericDecorator(
-                typeof(UnitOfWorkCommandHandlerDecorator<>),
-                typeof(ICommandHandler<>));
+        builder.RegisterGenericDecorator(
+            typeof(UnitOfWorkCommandHandlerDecorator<>),
+            typeof(ICommandHandler<>));
 
-            builder.RegisterGenericDecorator(
-                typeof(UnitOfWorkCommandHandlerWithResultDecorator<,>),
-                typeof(ICommandHandler<,>));
+        builder.RegisterGenericDecorator(
+            typeof(UnitOfWorkCommandHandlerWithResultDecorator<,>),
+            typeof(ICommandHandler<,>));
 
-            builder.RegisterGenericDecorator(
-                typeof(ValidationCommandHandlerDecorator<>),
-                typeof(ICommandHandler<>));
+        builder.RegisterGenericDecorator(
+            typeof(ValidationCommandHandlerDecorator<>),
+            typeof(ICommandHandler<>));
 
-            builder.RegisterGenericDecorator(
-                typeof(ValidationCommandHandlerWithResultDecorator<,>),
-                typeof(ICommandHandler<,>));
+        builder.RegisterGenericDecorator(
+            typeof(ValidationCommandHandlerWithResultDecorator<,>),
+            typeof(ICommandHandler<,>));
 
-            builder.RegisterGenericDecorator(
-                typeof(LoggingCommandHandlerDecorator<>),
-                typeof(ICommandHandler<>));
+        builder.RegisterGenericDecorator(
+            typeof(LoggingCommandHandlerDecorator<>),
+            typeof(ICommandHandler<>));
 
-            builder.RegisterGenericDecorator(
-                typeof(LoggingCommandHandlerWithResultDecorator<,>),
-                typeof(ICommandHandler<,>));
+        builder.RegisterGenericDecorator(
+            typeof(LoggingCommandHandlerWithResultDecorator<,>),
+            typeof(ICommandHandler<,>));
 
-            builder.RegisterGenericDecorator(
-                typeof(DomainEventsDispatcherNotificationHandlerDecorator<>),
-                typeof(INotificationHandler<>));
+        builder.RegisterGenericDecorator(
+            typeof(DomainEventsDispatcherNotificationHandlerDecorator<>),
+            typeof(INotificationHandler<>));
 
-            builder.RegisterAssemblyTypes(Assemblies.Application)
-                .AsClosedTypesOf(typeof(IDomainEventNotification<>))
-                .InstancePerDependency()
-                .FindConstructorsWith(new AllConstructorFinder());
-        }
+        builder.RegisterAssemblyTypes(Assemblies.Application)
+            .AsClosedTypesOf(typeof(IDomainEventNotification<>))
+            .InstancePerDependency()
+            .FindConstructorsWith(new AllConstructorFinder());
     }
 }

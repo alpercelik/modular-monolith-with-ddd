@@ -7,31 +7,30 @@ using CompanyName.MyMeetings.Modules.Payments.Domain.PriceListItems;
 using CompanyName.MyMeetings.Modules.Payments.Domain.SeedWork;
 using MediatR;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Application.PriceListItems.ActivatePriceListItem
+namespace CompanyName.MyMeetings.Modules.Payments.Application.PriceListItems.ActivatePriceListItem;
+
+internal class ActivatePriceListItemCommandHandler : ICommandHandler<ActivatePriceListItemCommand>
 {
-    internal class ActivatePriceListItemCommandHandler : ICommandHandler<ActivatePriceListItemCommand>
+    private readonly IAggregateStore _aggregateStore;
+
+    public ActivatePriceListItemCommandHandler(IAggregateStore aggregateStore)
     {
-        private readonly IAggregateStore _aggregateStore;
+        _aggregateStore = aggregateStore;
+    }
 
-        public ActivatePriceListItemCommandHandler(IAggregateStore aggregateStore)
+    public async Task<Unit> Handle(ActivatePriceListItemCommand command, CancellationToken cancellationToken)
+    {
+        var priceListItem = await _aggregateStore.Load(new PriceListItemId(command.PriceListItemId));
+
+        if (priceListItem == null)
         {
-            _aggregateStore = aggregateStore;
+            throw new InvalidCommandException(new List<string> { "Pricelist item for activation must exist." });
         }
 
-        public async Task<Unit> Handle(ActivatePriceListItemCommand command, CancellationToken cancellationToken)
-        {
-            var priceListItem = await _aggregateStore.Load(new PriceListItemId(command.PriceListItemId));
+        priceListItem.Activate();
 
-            if (priceListItem == null)
-            {
-                throw new InvalidCommandException(new List<string> { "Pricelist item for activation must exist." });
-            }
+        _aggregateStore.AppendChanges(priceListItem);
 
-            priceListItem.Activate();
-
-            _aggregateStore.AppendChanges(priceListItem);
-
-            return Unit.Value;
-        }
+        return Unit.Value;
     }
 }

@@ -2,36 +2,35 @@
 using CompanyName.MyMeetings.BuildingBlocks.Infrastructure.EventBus;
 using Serilog;
 
-namespace CompanyName.MyMeetings.BuildingBlocks.EventBus
+namespace CompanyName.MyMeetings.BuildingBlocks.EventBus;
+
+public class InMemoryEventBusClient : IEventsBus
 {
-    public class InMemoryEventBusClient : IEventsBus
+    private readonly ILogger _logger;
+
+    public InMemoryEventBusClient(ILogger logger)
     {
-        private readonly ILogger _logger;
+        _logger = logger;
+    }
 
-        public InMemoryEventBusClient(ILogger logger)
-        {
-            _logger = logger;
-        }
+    public void Dispose()
+    {
+    }
 
-        public void Dispose()
-        {
-        }
+    public async Task Publish<T>(T @event)
+        where T : IntegrationEvent
+    {
+        _logger.Information("Publishing {Event}", @event.GetType().FullName);
+        await InMemoryEventBus.Instance.Publish(@event);
+    }
 
-        public async Task Publish<T>(T @event)
-            where T : IntegrationEvent
-        {
-            _logger.Information("Publishing {Event}", @event.GetType().FullName);
-            await InMemoryEventBus.Instance.Publish(@event);
-        }
+    public void Subscribe<T>(IIntegrationEventHandler<T> handler)
+        where T : IntegrationEvent
+    {
+        InMemoryEventBus.Instance.Subscribe(handler);
+    }
 
-        public void Subscribe<T>(IIntegrationEventHandler<T> handler)
-            where T : IntegrationEvent
-        {
-            InMemoryEventBus.Instance.Subscribe(handler);
-        }
-
-        public void StartConsuming()
-        {
-        }
+    public void StartConsuming()
+    {
     }
 }

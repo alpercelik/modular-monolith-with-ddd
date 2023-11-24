@@ -1,14 +1,13 @@
 ﻿using System.Threading.Tasks;
 using Quartz;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Infrastructure.Configuration.Processing.Inbox
+namespace CompanyName.MyMeetings.Modules.Payments.Infrastructure.Configuration.Processing.Inbox;
+
+[DisallowConcurrentExecution]
+public class ProcessInboxJob : IJob
 {
-    [DisallowConcurrentExecution]
-    public class ProcessInboxJob : IJob
+    public async Task Execute(IJobExecutionContext context)
     {
-        public async Task Execute(IJobExecutionContext context)
-        {
-            await CommandsExecutor.Execute(new ProcessInboxCommand());
-        }
+        await CommandsExecutor.Execute(new ProcessInboxCommand());
     }
 }

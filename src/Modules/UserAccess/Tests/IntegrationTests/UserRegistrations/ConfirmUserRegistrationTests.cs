@@ -11,27 +11,26 @@ using CompanyNames.MyMeetings.Modules.UserAccess.IntegrationTests.SeedWork;
 using NSubstitute.ReceivedExtensions;
 using NUnit.Framework;
 
-namespace CompanyNames.MyMeetings.Modules.UserAccess.IntegrationTests.UserRegistrations
+namespace CompanyNames.MyMeetings.Modules.UserAccess.IntegrationTests.UserRegistrations;
+
+[TestFixture]
+public class ConfirmUserRegistrationTests : TestBase
 {
-    [TestFixture]
-    public class ConfirmUserRegistrationTests : TestBase
+    [Test]
+    public async Task ConfirmUserRegistration_Test()
     {
-        [Test]
-        public async Task ConfirmUserRegistration_Test()
-        {
-            var registrationId = await UserAccessModule.ExecuteCommandAsync(new RegisterNewUserCommand(
-                UserRegistrationSampleData.Login,
-                UserRegistrationSampleData.Password,
-                UserRegistrationSampleData.Email,
-                UserRegistrationSampleData.FirstName,
-                UserRegistrationSampleData.LastName,
-                "confirmLink"));
+        var registrationId = await UserAccessModule.ExecuteCommandAsync(new RegisterNewUserCommand(
+            UserRegistrationSampleData.Login,
+            UserRegistrationSampleData.Password,
+            UserRegistrationSampleData.Email,
+            UserRegistrationSampleData.FirstName,
+            UserRegistrationSampleData.LastName,
+            "confirmLink"));
 
-            await UserAccessModule.ExecuteCommandAsync(new ConfirmUserRegistrationCommand(registrationId));
+        await UserAccessModule.ExecuteCommandAsync(new ConfirmUserRegistrationCommand(registrationId));
 
-            var userRegistration = await UserAccessModule.ExecuteQueryAsync(new GetUserRegistrationQuery(registrationId));
+        var userRegistration = await UserAccessModule.ExecuteQueryAsync(new GetUserRegistrationQuery(registrationId));
 
-            Assert.That(userRegistration.StatusCode, Is.EqualTo(UserRegistrationStatus.Confirmed.Value));
-        }
+        Assert.That(userRegistration.StatusCode, Is.EqualTo(UserRegistrationStatus.Confirmed.Value));
     }
 }

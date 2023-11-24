@@ -10,36 +10,35 @@ using CompanyName.MyMeetings.Modules.Meetings.IntegrationTests.MeetingGroupPropo
 using CompanyName.MyMeetings.Modules.Meetings.IntegrationTests.SeedWork;
 using NUnit.Framework;
 
-namespace CompanyName.MyMeetings.Modules.Meetings.IntegrationTests.MeetingGroups
+namespace CompanyName.MyMeetings.Modules.Meetings.IntegrationTests.MeetingGroups;
+
+[TestFixture]
+public class CreateNewMeetingGroupTests : TestBase
 {
-    [TestFixture]
-    public class CreateNewMeetingGroupTests : TestBase
+    [Test]
+    public async Task CreateNewMeetingGroup_Test()
     {
-        [Test]
-        public async Task CreateNewMeetingGroup_Test()
-        {
-            // Arrange
-            var proposalId = await MeetingsModule.ExecuteCommandAsync(new ProposeMeetingGroupCommand(
-                MeetingGroupProposalSampleData.Name,
-                MeetingGroupProposalSampleData.Description,
-                MeetingGroupProposalSampleData.LocationCity,
-                MeetingGroupProposalSampleData.LocationCountryCode));
+        // Arrange
+        var proposalId = await MeetingsModule.ExecuteCommandAsync(new ProposeMeetingGroupCommand(
+            MeetingGroupProposalSampleData.Name,
+            MeetingGroupProposalSampleData.Description,
+            MeetingGroupProposalSampleData.LocationCity,
+            MeetingGroupProposalSampleData.LocationCountryCode));
 
-            await MeetingsModule.ExecuteCommandAsync(new AcceptMeetingGroupProposalCommand(Guid.NewGuid(), proposalId));
+        await MeetingsModule.ExecuteCommandAsync(new AcceptMeetingGroupProposalCommand(Guid.NewGuid(), proposalId));
 
-            // Act
-            await MeetingsModule.ExecuteCommandAsync(
-                new CreateNewMeetingGroupCommand(
-                    Guid.NewGuid(),
-                    new MeetingGroupProposalId(proposalId)));
+        // Act
+        await MeetingsModule.ExecuteCommandAsync(
+            new CreateNewMeetingGroupCommand(
+                Guid.NewGuid(),
+                new MeetingGroupProposalId(proposalId)));
 
-            // Assert
-            var meetingGroups = await MeetingsModule.ExecuteQueryAsync(new GetAuthenticationMemberMeetingGroupsQuery());
-            Assert.That(meetingGroups, Is.Not.Empty);
+        // Assert
+        var meetingGroups = await MeetingsModule.ExecuteQueryAsync(new GetAuthenticationMemberMeetingGroupsQuery());
+        Assert.That(meetingGroups, Is.Not.Empty);
 
-            var meetingGroupDetails =
-                await MeetingsModule.ExecuteQueryAsync(new GetMeetingGroupDetailsQuery(proposalId));
-            Assert.That(meetingGroupDetails.MembersCount, Is.EqualTo(1));
-        }
+        var meetingGroupDetails =
+            await MeetingsModule.ExecuteQueryAsync(new GetMeetingGroupDetailsQuery(proposalId));
+        Assert.That(meetingGroupDetails.MembersCount, Is.EqualTo(1));
     }
 }

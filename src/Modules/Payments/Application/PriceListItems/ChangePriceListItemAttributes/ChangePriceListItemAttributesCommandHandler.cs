@@ -8,34 +8,33 @@ using CompanyName.MyMeetings.Modules.Payments.Domain.SeedWork;
 using CompanyName.MyMeetings.Modules.Payments.Domain.Subscriptions;
 using MediatR;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Application.PriceListItems.ChangePriceListItemAttributes
+namespace CompanyName.MyMeetings.Modules.Payments.Application.PriceListItems.ChangePriceListItemAttributes;
+
+internal class ChangePriceListItemAttributesCommandHandler : ICommandHandler<ChangePriceListItemAttributesCommand>
 {
-    internal class ChangePriceListItemAttributesCommandHandler : ICommandHandler<ChangePriceListItemAttributesCommand>
+    private readonly IAggregateStore _aggregateStore;
+
+    public ChangePriceListItemAttributesCommandHandler(IAggregateStore aggregateStore)
     {
-        private readonly IAggregateStore _aggregateStore;
+        _aggregateStore = aggregateStore;
+    }
 
-        public ChangePriceListItemAttributesCommandHandler(IAggregateStore aggregateStore)
+    public async Task<Unit> Handle(ChangePriceListItemAttributesCommand command, CancellationToken cancellationToken)
+    {
+        var priceListItem = await _aggregateStore.Load(new PriceListItemId(command.PriceListItemId));
+
+        if (priceListItem == null)
         {
-            _aggregateStore = aggregateStore;
+            throw new InvalidCommandException(new List<string> { "Pricelist item for changing must exist." });
         }
 
-        public async Task<Unit> Handle(ChangePriceListItemAttributesCommand command, CancellationToken cancellationToken)
-        {
-            var priceListItem = await _aggregateStore.Load(new PriceListItemId(command.PriceListItemId));
+        priceListItem.ChangeAttributes(
+            command.CountryCode,
+            SubscriptionPeriod.Of(command.SubscriptionPeriodCode),
+            PriceListItemCategory.Of(command.CategoryCode),
+            MoneyValue.Of(command.PriceValue, command.PriceCurrency));
 
-            if (priceListItem == null)
-            {
-                throw new InvalidCommandException(new List<string> { "Pricelist item for changing must exist." });
-            }
-
-            priceListItem.ChangeAttributes(
-                command.CountryCode,
-                SubscriptionPeriod.Of(command.SubscriptionPeriodCode),
-                PriceListItemCategory.Of(command.CategoryCode),
-                MoneyValue.Of(command.PriceValue, command.PriceCurrency));
-
-            _aggregateStore.AppendChanges(priceListItem);
-            return Unit.Value;
-        }
+        _aggregateStore.AppendChanges(priceListItem);
+        return Unit.Value;
     }
 }

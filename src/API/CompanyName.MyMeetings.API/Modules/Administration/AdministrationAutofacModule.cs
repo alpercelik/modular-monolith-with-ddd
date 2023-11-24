@@ -2,15 +2,14 @@
 using CompanyName.MyMeetings.Modules.Administration.Application.Contracts;
 using CompanyName.MyMeetings.Modules.Administration.Infrastructure;
 
-namespace CompanyName.MyMeetings.API.Modules.Administration
+namespace CompanyName.MyMeetings.API.Modules.Administration;
+
+internal class AdministrationAutofacModule : Module
 {
-    internal class AdministrationAutofacModule : Module
+    protected override void Load(ContainerBuilder builder)
     {
-        protected override void Load(ContainerBuilder builder)
-        {
-            builder.RegisterType<AdministrationModule>()
-                .As<IAdministrationModule>()
-                .InstancePerLifetimeScope();
-        }
+        builder.RegisterType<AdministrationModule>()
+            .As<IAdministrationModule>()
+            .InstancePerLifetimeScope();
     }
 }

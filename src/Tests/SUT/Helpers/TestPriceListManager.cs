@@ -10,82 +10,81 @@ using CompanyName.MyMeetings.Modules.Payments.Domain.Subscriptions;
 using CompanyName.MyMeetings.SUT.SeedWork;
 using CompanyName.MyMeetings.SUT.SeedWork.Probing;
 
-namespace CompanyName.MyMeetings.SUT.Helpers
+namespace CompanyName.MyMeetings.SUT.Helpers;
+
+internal static class TestPriceListManager
 {
-    internal static class TestPriceListManager
+    internal static async Task AddPriceListItems(
+        IPaymentsModule paymentsModule,
+        string connectionString)
     {
-        internal static async Task AddPriceListItems(
+        await paymentsModule.ExecuteCommandAsync(new CreatePriceListItemCommand(
+            SubscriptionPeriod.Month.Code,
+            PriceListItemCategory.New.Code,
+            "PL",
+            60,
+            "PLN"));
+
+        await paymentsModule.ExecuteCommandAsync(new CreatePriceListItemCommand(
+            SubscriptionPeriod.HalfYear.Code,
+            PriceListItemCategory.New.Code,
+            "PL",
+            320,
+            "PLN"));
+
+        await paymentsModule.ExecuteCommandAsync(new CreatePriceListItemCommand(
+            SubscriptionPeriod.Month.Code,
+            PriceListItemCategory.New.Code,
+            "US",
+            15,
+            "USD"));
+
+        await paymentsModule.ExecuteCommandAsync(new CreatePriceListItemCommand(
+            SubscriptionPeriod.HalfYear.Code,
+            PriceListItemCategory.New.Code,
+            "US",
+            80,
+            "USD"));
+
+        await paymentsModule.ExecuteCommandAsync(new CreatePriceListItemCommand(
+            SubscriptionPeriod.HalfYear.Code,
+            PriceListItemCategory.Renewal.Code,
+            "PL",
+            320,
+            "PLN"));
+
+        await TestBase.GetEventually(new GetPriceListProbe(paymentsModule, x => x.Count == 5), 5000);
+
+        await AsyncOperationsHelper.WaitForProcessing(connectionString);
+    }
+
+    private class GetPriceListProbe : IProbe<List<PriceListItemDto>>
+    {
+        private readonly IPaymentsModule _paymentsModule;
+
+        private readonly Func<List<PriceListItemDto>, bool> _condition;
+
+        public GetPriceListProbe(
             IPaymentsModule paymentsModule,
-            string connectionString)
+            Func<List<PriceListItemDto>, bool> condition)
         {
-            await paymentsModule.ExecuteCommandAsync(new CreatePriceListItemCommand(
-                SubscriptionPeriod.Month.Code,
-                PriceListItemCategory.New.Code,
-                "PL",
-                60,
-                "PLN"));
-
-            await paymentsModule.ExecuteCommandAsync(new CreatePriceListItemCommand(
-                SubscriptionPeriod.HalfYear.Code,
-                PriceListItemCategory.New.Code,
-                "PL",
-                320,
-                "PLN"));
-
-            await paymentsModule.ExecuteCommandAsync(new CreatePriceListItemCommand(
-                SubscriptionPeriod.Month.Code,
-                PriceListItemCategory.New.Code,
-                "US",
-                15,
-                "USD"));
-
-            await paymentsModule.ExecuteCommandAsync(new CreatePriceListItemCommand(
-                SubscriptionPeriod.HalfYear.Code,
-                PriceListItemCategory.New.Code,
-                "US",
-                80,
-                "USD"));
-
-            await paymentsModule.ExecuteCommandAsync(new CreatePriceListItemCommand(
-                SubscriptionPeriod.HalfYear.Code,
-                PriceListItemCategory.Renewal.Code,
-                "PL",
-                320,
-                "PLN"));
-
-            await TestBase.GetEventually(new GetPriceListProbe(paymentsModule, x => x.Count == 5), 5000);
-
-            await AsyncOperationsHelper.WaitForProcessing(connectionString);
+            _paymentsModule = paymentsModule;
+            _condition = condition;
         }
 
-        private class GetPriceListProbe : IProbe<List<PriceListItemDto>>
+        public bool IsSatisfied(List<PriceListItemDto> sample)
         {
-            private readonly IPaymentsModule _paymentsModule;
+            return sample != null && _condition(sample);
+        }
 
-            private readonly Func<List<PriceListItemDto>, bool> _condition;
+        public async Task<List<PriceListItemDto>> GetSampleAsync()
+        {
+            return await _paymentsModule.ExecuteQueryAsync(new GetPriceListItemsQuery());
+        }
 
-            public GetPriceListProbe(
-                IPaymentsModule paymentsModule,
-                Func<List<PriceListItemDto>, bool> condition)
-            {
-                _paymentsModule = paymentsModule;
-                _condition = condition;
-            }
-
-            public bool IsSatisfied(List<PriceListItemDto> sample)
-            {
-                return sample != null && _condition(sample);
-            }
-
-            public async Task<List<PriceListItemDto>> GetSampleAsync()
-            {
-                return await _paymentsModule.ExecuteQueryAsync(new GetPriceListItemsQuery());
-            }
-
-            public string DescribeFailureTo()
-            {
-                return "Cannot get price list for specified condition";
-            }
+        public string DescribeFailureTo()
+        {
+            return "Cannot get price list for specified condition";
         }
     }
 }

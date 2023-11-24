@@ -2,12 +2,11 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace CompanyName.MyMeetings.BuildingBlocks.Infrastructure
+namespace CompanyName.MyMeetings.BuildingBlocks.Infrastructure;
+
+public interface IUnitOfWork
 {
-    public interface IUnitOfWork
-    {
-        Task<int> CommitAsync(
-            CancellationToken cancellationToken = default,
-            Guid? internalCommandId = null);
-    }
+    Task<int> CommitAsync(
+        CancellationToken cancellationToken = default,
+        Guid? internalCommandId = null);
 }

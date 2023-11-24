@@ -1,15 +1,14 @@
-﻿namespace CompanyNames.MyMeetings.Modules.UserAccess.IntegrationTests.UserRegistrations
+﻿namespace CompanyNames.MyMeetings.Modules.UserAccess.IntegrationTests.UserRegistrations;
+
+public struct UserRegistrationSampleData
 {
-    public struct UserRegistrationSampleData
-    {
-        public static string Login => "jdoe";
+    public static string Login => "jdoe";
 
-        public static string Email => "jdoe@mail.com";
+    public static string Email => "jdoe@mail.com";
 
-        public static string FirstName => "John";
+    public static string FirstName => "John";
 
-        public static string LastName => "Doe";
+    public static string LastName => "Doe";
 
-        public static string Password => "qwerty";
-    }
+    public static string Password => "qwerty";
 }

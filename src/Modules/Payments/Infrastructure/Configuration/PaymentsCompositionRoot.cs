@@ -1,19 +1,18 @@
 ﻿using Autofac;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Infrastructure.Configuration
+namespace CompanyName.MyMeetings.Modules.Payments.Infrastructure.Configuration;
+
+public static class PaymentsCompositionRoot
 {
-    public static class PaymentsCompositionRoot
+    private static IContainer _container;
+
+    public static void SetContainer(IContainer container)
     {
-        private static IContainer _container;
+        _container = container;
+    }
 
-        public static void SetContainer(IContainer container)
-        {
-            _container = container;
-        }
-
-        public static ILifetimeScope BeginLifetimeScope()
-        {
-            return _container.BeginLifetimeScope();
-        }
+    public static ILifetimeScope BeginLifetimeScope()
+    {
+        return _container.BeginLifetimeScope();
     }
 }

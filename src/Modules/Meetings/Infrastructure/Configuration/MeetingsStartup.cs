@@ -23,76 +23,75 @@ using CompanyName.MyMeetings.Modules.Meetings.Infrastructure.Configuration.Quart
 using Serilog.Extensions.Logging;
 using ILogger = Serilog.ILogger;
 
-namespace CompanyName.MyMeetings.Modules.Meetings.Infrastructure.Configuration
+namespace CompanyName.MyMeetings.Modules.Meetings.Infrastructure.Configuration;
+
+public class MeetingsStartup
 {
-    public class MeetingsStartup
+    private static IContainer _container;
+
+    public static void Initialize(
+        string connectionString,
+        IExecutionContextAccessor executionContextAccessor,
+        ILogger logger,
+        EmailsConfiguration emailsConfiguration,
+        IEventsBus eventsBus,
+        long? internalProcessingPoolingInterval = null)
     {
-        private static IContainer _container;
+        var moduleLogger = logger.ForContext("Module", "Meetings");
 
-        public static void Initialize(
-            string connectionString,
-            IExecutionContextAccessor executionContextAccessor,
-            ILogger logger,
-            EmailsConfiguration emailsConfiguration,
-            IEventsBus eventsBus,
-            long? internalProcessingPoolingInterval = null)
-        {
-            var moduleLogger = logger.ForContext("Module", "Meetings");
+        ConfigureCompositionRoot(
+            connectionString,
+            executionContextAccessor,
+            moduleLogger,
+            emailsConfiguration,
+            eventsBus);
 
-            ConfigureCompositionRoot(
-                connectionString,
-                executionContextAccessor,
-                moduleLogger,
-                emailsConfiguration,
-                eventsBus);
+        QuartzStartup.Initialize(moduleLogger, internalProcessingPoolingInterval);
 
-            QuartzStartup.Initialize(moduleLogger, internalProcessingPoolingInterval);
+        EventsBusStartup.Initialize(moduleLogger);
+    }
 
-            EventsBusStartup.Initialize(moduleLogger);
-        }
+    public static void Stop()
+    {
+        QuartzStartup.StopQuartz();
+    }
 
-        public static void Stop()
-        {
-            QuartzStartup.StopQuartz();
-        }
+    private static void ConfigureCompositionRoot(
+        string connectionString,
+        IExecutionContextAccessor executionContextAccessor,
+        ILogger logger,
+        EmailsConfiguration emailsConfiguration,
+        IEventsBus eventsBus)
+    {
+        var containerBuilder = new ContainerBuilder();
 
-        private static void ConfigureCompositionRoot(
-            string connectionString,
-            IExecutionContextAccessor executionContextAccessor,
-            ILogger logger,
-            EmailsConfiguration emailsConfiguration,
-            IEventsBus eventsBus)
-        {
-            var containerBuilder = new ContainerBuilder();
+        containerBuilder.RegisterModule(new LoggingModule(logger.ForContext("Module", "Meetings")));
 
-            containerBuilder.RegisterModule(new LoggingModule(logger.ForContext("Module", "Meetings")));
+        var loggerFactory = new SerilogLoggerFactory(logger);
+        containerBuilder.RegisterModule(new DataAccessModule(connectionString, loggerFactory));
+        containerBuilder.RegisterModule(new ProcessingModule());
+        containerBuilder.RegisterModule(new EventsBusModule(eventsBus));
+        containerBuilder.RegisterModule(new MediatorModule());
+        containerBuilder.RegisterModule(new AuthenticationModule());
 
-            var loggerFactory = new SerilogLoggerFactory(logger);
-            containerBuilder.RegisterModule(new DataAccessModule(connectionString, loggerFactory));
-            containerBuilder.RegisterModule(new ProcessingModule());
-            containerBuilder.RegisterModule(new EventsBusModule(eventsBus));
-            containerBuilder.RegisterModule(new MediatorModule());
-            containerBuilder.RegisterModule(new AuthenticationModule());
+        var domainNotificationsMap = new BiDictionary<string, Type>();
+        domainNotificationsMap.Add("MeetingGroupProposalAcceptedNotification", typeof(MeetingGroupProposalAcceptedNotification));
+        domainNotificationsMap.Add("MeetingGroupProposedNotification", typeof(MeetingGroupProposedNotification));
+        domainNotificationsMap.Add("MeetingGroupCreatedNotification", typeof(MeetingGroupCreatedNotification));
+        domainNotificationsMap.Add("MeetingAttendeeAddedNotification", typeof(MeetingAttendeeAddedNotification));
+        domainNotificationsMap.Add("MemberCreatedNotification", typeof(MemberCreatedNotification));
+        domainNotificationsMap.Add("MemberSubscriptionExpirationDateChangedNotification", typeof(MemberSubscriptionExpirationDateChangedNotification));
+        domainNotificationsMap.Add("MeetingCommentLikedNotification", typeof(MeetingCommentLikedNotification));
+        domainNotificationsMap.Add("MeetingCommentUnlikedNotification", typeof(MeetingCommentUnlikedNotification));
+        containerBuilder.RegisterModule(new OutboxModule(domainNotificationsMap));
 
-            var domainNotificationsMap = new BiDictionary<string, Type>();
-            domainNotificationsMap.Add("MeetingGroupProposalAcceptedNotification", typeof(MeetingGroupProposalAcceptedNotification));
-            domainNotificationsMap.Add("MeetingGroupProposedNotification", typeof(MeetingGroupProposedNotification));
-            domainNotificationsMap.Add("MeetingGroupCreatedNotification", typeof(MeetingGroupCreatedNotification));
-            domainNotificationsMap.Add("MeetingAttendeeAddedNotification", typeof(MeetingAttendeeAddedNotification));
-            domainNotificationsMap.Add("MemberCreatedNotification", typeof(MemberCreatedNotification));
-            domainNotificationsMap.Add("MemberSubscriptionExpirationDateChangedNotification", typeof(MemberSubscriptionExpirationDateChangedNotification));
-            domainNotificationsMap.Add("MeetingCommentLikedNotification", typeof(MeetingCommentLikedNotification));
-            domainNotificationsMap.Add("MeetingCommentUnlikedNotification", typeof(MeetingCommentUnlikedNotification));
-            containerBuilder.RegisterModule(new OutboxModule(domainNotificationsMap));
+        containerBuilder.RegisterModule(new EmailModule(emailsConfiguration));
+        containerBuilder.RegisterModule(new QuartzModule());
 
-            containerBuilder.RegisterModule(new EmailModule(emailsConfiguration));
-            containerBuilder.RegisterModule(new QuartzModule());
+        containerBuilder.RegisterInstance(executionContextAccessor);
 
-            containerBuilder.RegisterInstance(executionContextAccessor);
+        _container = containerBuilder.Build();
 
-            _container = containerBuilder.Build();
-
-            MeetingsCompositionRoot.SetContainer(_container);
-        }
+        MeetingsCompositionRoot.SetContainer(_container);
     }
 }

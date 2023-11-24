@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace CompanyName.MyMeetings.Modules.Meetings.Domain.MeetingGroups
+namespace CompanyName.MyMeetings.Modules.Meetings.Domain.MeetingGroups;
+
+public interface IMeetingGroupRepository
 {
-    public interface IMeetingGroupRepository
-    {
-        Task AddAsync(MeetingGroup meetingGroup);
+    Task AddAsync(MeetingGroup meetingGroup);
 
-        Task<int> Commit();
+    Task<int> Commit();
 
-        Task<MeetingGroup> GetByIdAsync(MeetingGroupId id);
-    }
+    Task<MeetingGroup> GetByIdAsync(MeetingGroupId id);
 }

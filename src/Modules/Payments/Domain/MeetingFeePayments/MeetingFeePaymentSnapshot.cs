@@ -1,17 +1,16 @@
 ﻿using System;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Domain.MeetingFeePayments
+namespace CompanyName.MyMeetings.Modules.Payments.Domain.MeetingFeePayments;
+
+public class MeetingFeePaymentSnapshot
 {
-    public class MeetingFeePaymentSnapshot
+    public MeetingFeePaymentSnapshot(Guid meetingFeePaymentId, Guid meetingFeeId)
     {
-        public MeetingFeePaymentSnapshot(Guid meetingFeePaymentId, Guid meetingFeeId)
-        {
-            MeetingFeePaymentId = meetingFeePaymentId;
-            MeetingFeeId = meetingFeeId;
-        }
-
-        public Guid MeetingFeePaymentId { get; }
-
-        public Guid MeetingFeeId { get; }
+        MeetingFeePaymentId = meetingFeePaymentId;
+        MeetingFeeId = meetingFeeId;
     }
+
+    public Guid MeetingFeePaymentId { get; }
+
+    public Guid MeetingFeeId { get; }
 }

@@ -1,13 +1,12 @@
 ﻿using FluentValidation;
 
-namespace CompanyName.MyMeetings.Modules.Meetings.Application.MeetingComments.EditMeetingComment
+namespace CompanyName.MyMeetings.Modules.Meetings.Application.MeetingComments.EditMeetingComment;
+
+internal class EditMeetingCommentCommandValidator : AbstractValidator<EditMeetingCommentCommand>
 {
-    internal class EditMeetingCommentCommandValidator : AbstractValidator<EditMeetingCommentCommand>
+    public EditMeetingCommentCommandValidator()
     {
-        public EditMeetingCommentCommandValidator()
-        {
-            RuleFor(c => c.EditedComment).NotNull().NotEmpty()
-                .WithMessage("Comment cannot be null or empty.");
-        }
+        RuleFor(c => c.EditedComment).NotNull().NotEmpty()
+            .WithMessage("Comment cannot be null or empty.");
     }
 }

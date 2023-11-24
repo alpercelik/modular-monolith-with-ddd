@@ -2,16 +2,15 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace CompanyName.MyMeetings.Modules.Administration.Infrastructure.InternalCommands
-{
-    internal class InternalCommandEntityTypeConfiguration : IEntityTypeConfiguration<InternalCommand>
-    {
-        public void Configure(EntityTypeBuilder<InternalCommand> builder)
-        {
-            builder.ToTable("InternalCommands", "administration");
+namespace CompanyName.MyMeetings.Modules.Administration.Infrastructure.InternalCommands;
 
-            builder.HasKey(b => b.Id);
-            builder.Property(b => b.Id).ValueGeneratedNever();
-        }
+internal class InternalCommandEntityTypeConfiguration : IEntityTypeConfiguration<InternalCommand>
+{
+    public void Configure(EntityTypeBuilder<InternalCommand> builder)
+    {
+        builder.ToTable("InternalCommands", "administration");
+
+        builder.HasKey(b => b.Id);
+        builder.Property(b => b.Id).ValueGeneratedNever();
     }
 }

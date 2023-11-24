@@ -1,14 +1,13 @@
 ﻿using System.Threading.Tasks;
 using Quartz;
 
-namespace CompanyName.MyMeetings.Modules.Administration.Infrastructure.Configuration.Processing.InternalCommands
+namespace CompanyName.MyMeetings.Modules.Administration.Infrastructure.Configuration.Processing.InternalCommands;
+
+[DisallowConcurrentExecution]
+public class ProcessInternalCommandsJob : IJob
 {
-    [DisallowConcurrentExecution]
-    public class ProcessInternalCommandsJob : IJob
+    public async Task Execute(IJobExecutionContext context)
     {
-        public async Task Execute(IJobExecutionContext context)
-        {
-            await CommandsExecutor.Execute(new ProcessInternalCommandsCommand());
-        }
+        await CommandsExecutor.Execute(new ProcessInternalCommandsCommand());
     }
 }

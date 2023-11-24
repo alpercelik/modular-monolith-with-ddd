@@ -8,28 +8,27 @@ using CompanyName.MyMeetings.Modules.Meetings.Domain.Meetings;
 using CompanyName.MyMeetings.Modules.Meetings.Domain.Meetings.Events;
 using MediatR;
 
-namespace CompanyName.MyMeetings.Modules.Meetings.Application.MeetingCommentingConfiguration
+namespace CompanyName.MyMeetings.Modules.Meetings.Application.MeetingCommentingConfiguration;
+
+internal class MeetingCreatedEventHandler : INotificationHandler<MeetingCreatedDomainEvent>
 {
-    internal class MeetingCreatedEventHandler : INotificationHandler<MeetingCreatedDomainEvent>
+    private readonly IMeetingRepository _meetingRepository;
+    private readonly IMeetingCommentingConfigurationRepository _meetingCommentingConfigurationRepository;
+
+    public MeetingCreatedEventHandler(
+        IMeetingRepository meetingRepository,
+        IMeetingCommentingConfigurationRepository meetingCommentingConfigurationRepository)
     {
-        private readonly IMeetingRepository _meetingRepository;
-        private readonly IMeetingCommentingConfigurationRepository _meetingCommentingConfigurationRepository;
+        _meetingRepository = meetingRepository;
+        _meetingCommentingConfigurationRepository = meetingCommentingConfigurationRepository;
+    }
 
-        public MeetingCreatedEventHandler(
-            IMeetingRepository meetingRepository,
-            IMeetingCommentingConfigurationRepository meetingCommentingConfigurationRepository)
-        {
-            _meetingRepository = meetingRepository;
-            _meetingCommentingConfigurationRepository = meetingCommentingConfigurationRepository;
-        }
+    public async Task Handle(MeetingCreatedDomainEvent @event, CancellationToken cancellationToken)
+    {
+        var meeting = await _meetingRepository.GetByIdAsync(@event.MeetingId);
 
-        public async Task Handle(MeetingCreatedDomainEvent @event, CancellationToken cancellationToken)
-        {
-            var meeting = await _meetingRepository.GetByIdAsync(@event.MeetingId);
+        var meetingCommentingConfiguration = meeting.CreateCommentingConfiguration();
 
-            var meetingCommentingConfiguration = meeting.CreateCommentingConfiguration();
-
-            await _meetingCommentingConfigurationRepository.AddAsync(meetingCommentingConfiguration);
-        }
+        await _meetingCommentingConfigurationRepository.AddAsync(meetingCommentingConfiguration);
     }
 }

@@ -9,39 +9,38 @@ using CompanyName.MyMeetings.Modules.Administration.Application.MeetingGroupProp
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CompanyName.MyMeetings.API.Modules.Administration.MeetingGroupProposals
+namespace CompanyName.MyMeetings.API.Modules.Administration.MeetingGroupProposals;
+
+[Route("api/administration/meetingGroupProposals")]
+[ApiController]
+public class MeetingGroupProposalsController : ControllerBase
 {
-    [Route("api/administration/meetingGroupProposals")]
-    [ApiController]
-    public class MeetingGroupProposalsController : ControllerBase
+    private readonly IAdministrationModule _administrationModule;
+
+    public MeetingGroupProposalsController(IAdministrationModule administrationModule)
     {
-        private readonly IAdministrationModule _administrationModule;
+        _administrationModule = administrationModule;
+    }
 
-        public MeetingGroupProposalsController(IAdministrationModule administrationModule)
-        {
-            _administrationModule = administrationModule;
-        }
+    [HttpGet("")]
+    [HasPermission(AdministrationPermissions.AcceptMeetingGroupProposal)]
+    [ProducesResponseType(typeof(List<MeetingGroupProposalDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetMeetingGroupProposals()
+    {
+        var meetingGroupProposals =
+            await _administrationModule.ExecuteQueryAsync(new GetMeetingGroupProposalsQuery());
 
-        [HttpGet("")]
-        [HasPermission(AdministrationPermissions.AcceptMeetingGroupProposal)]
-        [ProducesResponseType(typeof(List<MeetingGroupProposalDto>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetMeetingGroupProposals()
-        {
-            var meetingGroupProposals =
-                await _administrationModule.ExecuteQueryAsync(new GetMeetingGroupProposalsQuery());
+        return Ok(meetingGroupProposals);
+    }
 
-            return Ok(meetingGroupProposals);
-        }
+    [HttpPatch("{meetingGroupProposalId}/accept")]
+    [HasPermission(AdministrationPermissions.AcceptMeetingGroupProposal)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> AcceptMeetingGroupProposal(Guid meetingGroupProposalId)
+    {
+        await _administrationModule.ExecuteCommandAsync(
+            new AcceptMeetingGroupProposalCommand(meetingGroupProposalId));
 
-        [HttpPatch("{meetingGroupProposalId}/accept")]
-        [HasPermission(AdministrationPermissions.AcceptMeetingGroupProposal)]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> AcceptMeetingGroupProposal(Guid meetingGroupProposalId)
-        {
-            await _administrationModule.ExecuteCommandAsync(
-                new AcceptMeetingGroupProposalCommand(meetingGroupProposalId));
-
-            return Ok();
-        }
+        return Ok();
     }
 }

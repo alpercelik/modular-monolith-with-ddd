@@ -1,13 +1,12 @@
 ﻿using System;
 using CompanyName.MyMeetings.BuildingBlocks.Domain;
 
-namespace CompanyName.MyMeetings.Modules.Administration.Domain.Members
+namespace CompanyName.MyMeetings.Modules.Administration.Domain.Members;
+
+public class MemberId : TypedIdValueBase
 {
-    public class MemberId : TypedIdValueBase
+    public MemberId(Guid value)
+        : base(value)
     {
-        public MemberId(Guid value)
-            : base(value)
-        {
-        }
     }
 }

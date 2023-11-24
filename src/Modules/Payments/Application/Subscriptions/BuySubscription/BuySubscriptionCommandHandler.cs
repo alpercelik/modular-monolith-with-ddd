@@ -9,40 +9,39 @@ using CompanyName.MyMeetings.Modules.Payments.Domain.SeedWork;
 using CompanyName.MyMeetings.Modules.Payments.Domain.SubscriptionPayments;
 using CompanyName.MyMeetings.Modules.Payments.Domain.Subscriptions;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Application.Subscriptions.BuySubscription
+namespace CompanyName.MyMeetings.Modules.Payments.Application.Subscriptions.BuySubscription;
+
+internal class BuySubscriptionCommandHandler : ICommandHandler<BuySubscriptionCommand, Guid>
 {
-    internal class BuySubscriptionCommandHandler : ICommandHandler<BuySubscriptionCommand, Guid>
+    private readonly IAggregateStore _aggregateStore;
+
+    private readonly IPayerContext _payerContext;
+
+    private readonly ISqlConnectionFactory _sqlConnectionFactory;
+
+    internal BuySubscriptionCommandHandler(
+        IAggregateStore aggregateStore,
+        IPayerContext payerContext,
+        ISqlConnectionFactory sqlConnectionFactory)
     {
-        private readonly IAggregateStore _aggregateStore;
+        _aggregateStore = aggregateStore;
+        _payerContext = payerContext;
+        _sqlConnectionFactory = sqlConnectionFactory;
+    }
 
-        private readonly IPayerContext _payerContext;
+    public async Task<Guid> Handle(BuySubscriptionCommand command, CancellationToken cancellationToken)
+    {
+        var priceList = await PriceListFactory.CreatePriceList(_sqlConnectionFactory.GetOpenConnection());
 
-        private readonly ISqlConnectionFactory _sqlConnectionFactory;
+        var subscription = SubscriptionPayment.Buy(
+            _payerContext.PayerId,
+            SubscriptionPeriod.Of(command.SubscriptionTypeCode),
+            command.CountryCode,
+            MoneyValue.Of(command.Value, command.Currency),
+            priceList);
 
-        internal BuySubscriptionCommandHandler(
-            IAggregateStore aggregateStore,
-            IPayerContext payerContext,
-            ISqlConnectionFactory sqlConnectionFactory)
-        {
-            _aggregateStore = aggregateStore;
-            _payerContext = payerContext;
-            _sqlConnectionFactory = sqlConnectionFactory;
-        }
+        _aggregateStore.AppendChanges(subscription);
 
-        public async Task<Guid> Handle(BuySubscriptionCommand command, CancellationToken cancellationToken)
-        {
-            var priceList = await PriceListFactory.CreatePriceList(_sqlConnectionFactory.GetOpenConnection());
-
-            var subscription = SubscriptionPayment.Buy(
-                _payerContext.PayerId,
-                SubscriptionPeriod.Of(command.SubscriptionTypeCode),
-                command.CountryCode,
-                MoneyValue.Of(command.Value, command.Currency),
-                priceList);
-
-            _aggregateStore.AppendChanges(subscription);
-
-            return subscription.Id;
-        }
+        return subscription.Id;
     }
 }

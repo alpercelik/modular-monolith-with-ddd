@@ -1,19 +1,18 @@
 ﻿using System;
 
-namespace CompanyName.MyMeetings.BuildingBlocks.IntegrationTests.Probing
+namespace CompanyName.MyMeetings.BuildingBlocks.IntegrationTests.Probing;
+
+public class Timeout
 {
-    public class Timeout
+    private readonly DateTime _endTime;
+
+    public Timeout(int duration)
     {
-        private readonly DateTime _endTime;
+        this._endTime = DateTime.Now.AddMilliseconds(duration);
+    }
 
-        public Timeout(int duration)
-        {
-            this._endTime = DateTime.Now.AddMilliseconds(duration);
-        }
-
-        public bool HasTimedOut()
-        {
-            return DateTime.Now > _endTime;
-        }
+    public bool HasTimedOut()
+    {
+        return DateTime.Now > _endTime;
     }
 }

@@ -19,71 +19,70 @@ using CompanyName.MyMeetings.Modules.UserAccess.Infrastructure.Configuration.Sec
 using Serilog;
 using Serilog.AspNetCore;
 
-namespace CompanyName.MyMeetings.Modules.UserAccess.Infrastructure.Configuration
+namespace CompanyName.MyMeetings.Modules.UserAccess.Infrastructure.Configuration;
+
+public class UserAccessStartup
 {
-    public class UserAccessStartup
+    private static IContainer _container;
+
+    public static void Initialize(
+        string connectionString,
+        IExecutionContextAccessor executionContextAccessor,
+        ILogger logger,
+        EmailsConfiguration emailsConfiguration,
+        string textEncryptionKey,
+        IEmailSender emailSender,
+        IEventsBus eventsBus,
+        long? internalProcessingPoolingInterval = null)
     {
-        private static IContainer _container;
+        var moduleLogger = logger.ForContext("Module", "UserAccess");
 
-        public static void Initialize(
-            string connectionString,
-            IExecutionContextAccessor executionContextAccessor,
-            ILogger logger,
-            EmailsConfiguration emailsConfiguration,
-            string textEncryptionKey,
-            IEmailSender emailSender,
-            IEventsBus eventsBus,
-            long? internalProcessingPoolingInterval = null)
-        {
-            var moduleLogger = logger.ForContext("Module", "UserAccess");
+        ConfigureCompositionRoot(
+            connectionString,
+            executionContextAccessor,
+            logger,
+            emailsConfiguration,
+            textEncryptionKey,
+            emailSender,
+            eventsBus);
 
-            ConfigureCompositionRoot(
-                connectionString,
-                executionContextAccessor,
-                logger,
-                emailsConfiguration,
-                textEncryptionKey,
-                emailSender,
-                eventsBus);
+        QuartzStartup.Initialize(moduleLogger, internalProcessingPoolingInterval);
 
-            QuartzStartup.Initialize(moduleLogger, internalProcessingPoolingInterval);
+        EventsBusStartup.Initialize(moduleLogger);
+    }
 
-            EventsBusStartup.Initialize(moduleLogger);
-        }
+    private static void ConfigureCompositionRoot(
+        string connectionString,
+        IExecutionContextAccessor executionContextAccessor,
+        ILogger logger,
+        EmailsConfiguration emailsConfiguration,
+        string textEncryptionKey,
+        IEmailSender emailSender,
+        IEventsBus eventsBus)
+    {
+        var containerBuilder = new ContainerBuilder();
 
-        private static void ConfigureCompositionRoot(
-            string connectionString,
-            IExecutionContextAccessor executionContextAccessor,
-            ILogger logger,
-            EmailsConfiguration emailsConfiguration,
-            string textEncryptionKey,
-            IEmailSender emailSender,
-            IEventsBus eventsBus)
-        {
-            var containerBuilder = new ContainerBuilder();
+        containerBuilder.RegisterModule(new LoggingModule(logger.ForContext("Module", "UserAccess")));
 
-            containerBuilder.RegisterModule(new LoggingModule(logger.ForContext("Module", "UserAccess")));
+        var loggerFactory = new SerilogLoggerFactory(logger);
+        containerBuilder.RegisterModule(new DataAccessModule(connectionString, loggerFactory));
+        containerBuilder.RegisterModule(new DomainModule());
+        containerBuilder.RegisterModule(new ProcessingModule());
+        containerBuilder.RegisterModule(new EventsBusModule(eventsBus));
+        containerBuilder.RegisterModule(new MediatorModule());
 
-            var loggerFactory = new SerilogLoggerFactory(logger);
-            containerBuilder.RegisterModule(new DataAccessModule(connectionString, loggerFactory));
-            containerBuilder.RegisterModule(new DomainModule());
-            containerBuilder.RegisterModule(new ProcessingModule());
-            containerBuilder.RegisterModule(new EventsBusModule(eventsBus));
-            containerBuilder.RegisterModule(new MediatorModule());
+        var domainNotificationsMap = new BiDictionary<string, Type>();
+        domainNotificationsMap.Add("NewUserRegisteredNotification", typeof(NewUserRegisteredNotification));
+        containerBuilder.RegisterModule(new OutboxModule(domainNotificationsMap));
 
-            var domainNotificationsMap = new BiDictionary<string, Type>();
-            domainNotificationsMap.Add("NewUserRegisteredNotification", typeof(NewUserRegisteredNotification));
-            containerBuilder.RegisterModule(new OutboxModule(domainNotificationsMap));
+        containerBuilder.RegisterModule(new QuartzModule());
+        containerBuilder.RegisterModule(new EmailModule(emailsConfiguration, emailSender));
+        containerBuilder.RegisterModule(new SecurityModule(textEncryptionKey));
 
-            containerBuilder.RegisterModule(new QuartzModule());
-            containerBuilder.RegisterModule(new EmailModule(emailsConfiguration, emailSender));
-            containerBuilder.RegisterModule(new SecurityModule(textEncryptionKey));
+        containerBuilder.RegisterInstance(executionContextAccessor);
 
-            containerBuilder.RegisterInstance(executionContextAccessor);
+        _container = containerBuilder.Build();
 
-            _container = containerBuilder.Build();
-
-            UserAccessCompositionRoot.SetContainer(_container);
-        }
+        UserAccessCompositionRoot.SetContainer(_container);
     }
 }

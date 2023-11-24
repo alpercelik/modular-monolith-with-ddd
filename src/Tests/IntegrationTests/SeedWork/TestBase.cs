@@ -21,110 +21,109 @@ using NSubstitute;
 using NUnit.Framework;
 using Serilog;
 
-namespace CompanyName.MyMeetings.IntegrationTests.SeedWork
+namespace CompanyName.MyMeetings.IntegrationTests.SeedWork;
+
+public class TestBase
 {
-    public class TestBase
+    protected string ConnectionString { get; private set; }
+
+    protected ILogger Logger { get; private set; }
+
+    protected IAdministrationModule AdministrationModule { get; private set; }
+
+    protected IMeetingsModule MeetingsModule { get; private set; }
+
+    protected IEmailSender EmailSender { get; private set; }
+
+    protected ExecutionContextMock ExecutionContext { get; private set; }
+
+    protected IEventsBus EventsBus { get; private set; }
+
+    [SetUp]
+    public async Task BeforeEachTest()
     {
-        protected string ConnectionString { get; private set; }
-
-        protected ILogger Logger { get; private set; }
-
-        protected IAdministrationModule AdministrationModule { get; private set; }
-
-        protected IMeetingsModule MeetingsModule { get; private set; }
-
-        protected IEmailSender EmailSender { get; private set; }
-
-        protected ExecutionContextMock ExecutionContext { get; private set; }
-
-        protected IEventsBus EventsBus { get; private set; }
-
-        [SetUp]
-        public async Task BeforeEachTest()
+        const string connectionStringEnvironmentVariable =
+            "ASPNETCORE_MyMeetings_IntegrationTests_ConnectionString";
+        ConnectionString = EnvironmentVariablesProvider.GetVariable(connectionStringEnvironmentVariable);
+        if (ConnectionString == null)
         {
-            const string connectionStringEnvironmentVariable =
-                "ASPNETCORE_MyMeetings_IntegrationTests_ConnectionString";
-            ConnectionString = EnvironmentVariablesProvider.GetVariable(connectionStringEnvironmentVariable);
-            if (ConnectionString == null)
-            {
-                throw new ApplicationException(
-                    $"Define connection string to integration tests database using environment variable: {connectionStringEnvironmentVariable}");
-            }
-
-            using (var sqlConnection = new SqlConnection(ConnectionString))
-            {
-                await ClearDatabase(sqlConnection);
-            }
-
-            Logger = Substitute.For<ILogger>();
-            EmailSender = Substitute.For<IEmailSender>();
-            ExecutionContext = new ExecutionContextMock(Guid.NewGuid());
-
-            EventsBus = new InMemoryEventBusClient(Logger);
-
-            AdministrationStartup.Initialize(
-                ConnectionString,
-                ExecutionContext,
-                Logger,
-                EventsBus);
-
-            MeetingsStartup.Initialize(
-                ConnectionString,
-                ExecutionContext,
-                Logger,
-                new EmailsConfiguration("from@email.com"),
-                EventsBus);
-
-            AdministrationModule = new AdministrationModule();
-            MeetingsModule = new MeetingsModule();
+            throw new ApplicationException(
+                $"Define connection string to integration tests database using environment variable: {connectionStringEnvironmentVariable}");
         }
 
-        [TearDown]
-        public void AfterEachTest()
+        using (var sqlConnection = new SqlConnection(ConnectionString))
         {
-            MeetingsStartup.Stop();
-            AdministrationStartup.Stop();
-            SystemClock.Reset();
+            await ClearDatabase(sqlConnection);
         }
 
-        protected static void AssertBrokenRule<TRule>(AsyncTestDelegate testDelegate)
-            where TRule : class, IBusinessRule
-        {
-            var message = $"Expected {typeof(TRule).Name} broken rule";
-            var businessRuleValidationException =
-                Assert.CatchAsync<BusinessRuleValidationException>(testDelegate, message);
-            if (businessRuleValidationException != null)
-            {
-                Assert.That(businessRuleValidationException.BrokenRule, Is.TypeOf<TRule>(), message);
-            }
-        }
+        Logger = Substitute.For<ILogger>();
+        EmailSender = Substitute.For<IEmailSender>();
+        ExecutionContext = new ExecutionContextMock(Guid.NewGuid());
 
-        protected static async Task AssertEventually(IProbe probe, int timeout)
-        {
-            await new Poller(timeout).CheckAsync(probe);
-        }
+        EventsBus = new InMemoryEventBusClient(Logger);
 
-        private static async Task ClearDatabase(IDbConnection connection)
-        {
-            const string sql = "DELETE FROM [administration].[InboxMessages] " +
-                               "DELETE FROM [administration].[InternalCommands] " +
-                               "DELETE FROM [administration].[OutboxMessages] " +
-                               "DELETE FROM [administration].[MeetingGroupProposals] " +
-                               "DELETE FROM [administration].[Members] " +
-                               "DELETE FROM [meetings].[InboxMessages] " +
-                               "DELETE FROM [meetings].[InternalCommands] " +
-                               "DELETE FROM [meetings].[OutboxMessages] " +
-                               "DELETE FROM [meetings].[MeetingAttendees] " +
-                               "DELETE FROM [meetings].[MeetingGroupMembers] " +
-                               "DELETE FROM [meetings].[MeetingGroupProposals] " +
-                               "DELETE FROM [meetings].[MeetingGroups] " +
-                               "DELETE FROM [meetings].[MeetingNotAttendees] " +
-                               "DELETE FROM [meetings].[MeetingCommentingConfigurations] " +
-                               "DELETE FROM [meetings].[Meetings] " +
-                               "DELETE FROM [meetings].[MeetingWaitlistMembers] " +
-                               "DELETE FROM [meetings].[Members] ";
+        AdministrationStartup.Initialize(
+            ConnectionString,
+            ExecutionContext,
+            Logger,
+            EventsBus);
 
-            await connection.ExecuteScalarAsync(sql);
+        MeetingsStartup.Initialize(
+            ConnectionString,
+            ExecutionContext,
+            Logger,
+            new EmailsConfiguration("from@email.com"),
+            EventsBus);
+
+        AdministrationModule = new AdministrationModule();
+        MeetingsModule = new MeetingsModule();
+    }
+
+    [TearDown]
+    public void AfterEachTest()
+    {
+        MeetingsStartup.Stop();
+        AdministrationStartup.Stop();
+        SystemClock.Reset();
+    }
+
+    protected static void AssertBrokenRule<TRule>(AsyncTestDelegate testDelegate)
+        where TRule : class, IBusinessRule
+    {
+        var message = $"Expected {typeof(TRule).Name} broken rule";
+        var businessRuleValidationException =
+            Assert.CatchAsync<BusinessRuleValidationException>(testDelegate, message);
+        if (businessRuleValidationException != null)
+        {
+            Assert.That(businessRuleValidationException.BrokenRule, Is.TypeOf<TRule>(), message);
         }
+    }
+
+    protected static async Task AssertEventually(IProbe probe, int timeout)
+    {
+        await new Poller(timeout).CheckAsync(probe);
+    }
+
+    private static async Task ClearDatabase(IDbConnection connection)
+    {
+        const string sql = "DELETE FROM [administration].[InboxMessages] " +
+                           "DELETE FROM [administration].[InternalCommands] " +
+                           "DELETE FROM [administration].[OutboxMessages] " +
+                           "DELETE FROM [administration].[MeetingGroupProposals] " +
+                           "DELETE FROM [administration].[Members] " +
+                           "DELETE FROM [meetings].[InboxMessages] " +
+                           "DELETE FROM [meetings].[InternalCommands] " +
+                           "DELETE FROM [meetings].[OutboxMessages] " +
+                           "DELETE FROM [meetings].[MeetingAttendees] " +
+                           "DELETE FROM [meetings].[MeetingGroupMembers] " +
+                           "DELETE FROM [meetings].[MeetingGroupProposals] " +
+                           "DELETE FROM [meetings].[MeetingGroups] " +
+                           "DELETE FROM [meetings].[MeetingNotAttendees] " +
+                           "DELETE FROM [meetings].[MeetingCommentingConfigurations] " +
+                           "DELETE FROM [meetings].[Meetings] " +
+                           "DELETE FROM [meetings].[MeetingWaitlistMembers] " +
+                           "DELETE FROM [meetings].[Members] ";
+
+        await connection.ExecuteScalarAsync(sql);
     }
 }

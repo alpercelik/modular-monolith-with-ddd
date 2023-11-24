@@ -2,29 +2,28 @@
 using CompanyName.MyMeetings.BuildingBlocks.EventBus;
 using CompanyName.MyMeetings.BuildingBlocks.Infrastructure.EventBus;
 
-namespace CompanyName.MyMeetings.Modules.Administration.Infrastructure.Configuration.EventsBus
+namespace CompanyName.MyMeetings.Modules.Administration.Infrastructure.Configuration.EventsBus;
+
+internal class EventsBusModule : Autofac.Module
 {
-    internal class EventsBusModule : Autofac.Module
+    private readonly IEventsBus _eventsBus;
+
+    public EventsBusModule(IEventsBus eventsBus)
     {
-        private readonly IEventsBus _eventsBus;
+        _eventsBus = eventsBus;
+    }
 
-        public EventsBusModule(IEventsBus eventsBus)
+    protected override void Load(ContainerBuilder builder)
+    {
+        if (_eventsBus != null)
         {
-            _eventsBus = eventsBus;
+            builder.RegisterInstance(_eventsBus).SingleInstance();
         }
-
-        protected override void Load(ContainerBuilder builder)
+        else
         {
-            if (_eventsBus != null)
-            {
-                builder.RegisterInstance(_eventsBus).SingleInstance();
-            }
-            else
-            {
-                builder.RegisterType<InMemoryEventBusClient>()
-                    .As<IEventsBus>()
-                    .SingleInstance();
-            }
+            builder.RegisterType<InMemoryEventBusClient>()
+                .As<IEventsBus>()
+                .SingleInstance();
         }
     }
 }

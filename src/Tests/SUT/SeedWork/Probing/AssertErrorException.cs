@@ -1,12 +1,11 @@
 ﻿using System;
 
-namespace CompanyName.MyMeetings.SUT.SeedWork.Probing
+namespace CompanyName.MyMeetings.SUT.SeedWork.Probing;
+
+public class AssertErrorException : Exception
 {
-    public class AssertErrorException : Exception
+    public AssertErrorException(string message)
+        : base(message)
     {
-        public AssertErrorException(string message)
-            : base(message)
-        {
-        }
     }
 }

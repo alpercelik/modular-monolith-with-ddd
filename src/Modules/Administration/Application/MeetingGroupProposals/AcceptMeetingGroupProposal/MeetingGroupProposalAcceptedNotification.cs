@@ -4,14 +4,13 @@ using CompanyName.MyMeetings.Modules.Administration.Domain.MeetingGroupProposals
 using CompanyName.MyMeetings.Modules.Administration.Domain.MeetingGroupProposals.Events;
 using Newtonsoft.Json;
 
-namespace CompanyName.MyMeetings.Modules.Administration.Application.MeetingGroupProposals.AcceptMeetingGroupProposal
+namespace CompanyName.MyMeetings.Modules.Administration.Application.MeetingGroupProposals.AcceptMeetingGroupProposal;
+
+public class MeetingGroupProposalAcceptedNotification : DomainNotificationBase<MeetingGroupProposalAcceptedDomainEvent>
 {
-    public class MeetingGroupProposalAcceptedNotification : DomainNotificationBase<MeetingGroupProposalAcceptedDomainEvent>
+    [JsonConstructor]
+    public MeetingGroupProposalAcceptedNotification(MeetingGroupProposalAcceptedDomainEvent domainEvent, Guid id)
+        : base(domainEvent, id)
     {
-        [JsonConstructor]
-        public MeetingGroupProposalAcceptedNotification(MeetingGroupProposalAcceptedDomainEvent domainEvent, Guid id)
-            : base(domainEvent, id)
-        {
-        }
     }
 }

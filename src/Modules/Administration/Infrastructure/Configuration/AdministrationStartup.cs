@@ -18,67 +18,66 @@ using CompanyName.MyMeetings.Modules.Administration.Infrastructure.Configuration
 using Serilog;
 using Serilog.AspNetCore;
 
-namespace CompanyName.MyMeetings.Modules.Administration.Infrastructure.Configuration
+namespace CompanyName.MyMeetings.Modules.Administration.Infrastructure.Configuration;
+
+public class AdministrationStartup
 {
-    public class AdministrationStartup
+    private static IContainer _container;
+
+    public static void Initialize(
+        string connectionString,
+        IExecutionContextAccessor executionContextAccessor,
+        ILogger logger,
+        IEventsBus eventsBus,
+        long? internalProcessingPoolingInterval = null)
     {
-        private static IContainer _container;
+        var moduleLogger = logger.ForContext("Module", "Administration");
 
-        public static void Initialize(
-            string connectionString,
-            IExecutionContextAccessor executionContextAccessor,
-            ILogger logger,
-            IEventsBus eventsBus,
-            long? internalProcessingPoolingInterval = null)
-        {
-            var moduleLogger = logger.ForContext("Module", "Administration");
+        ConfigureContainer(connectionString, executionContextAccessor, moduleLogger, eventsBus);
 
-            ConfigureContainer(connectionString, executionContextAccessor, moduleLogger, eventsBus);
+        QuartzStartup.Initialize(moduleLogger, internalProcessingPoolingInterval);
 
-            QuartzStartup.Initialize(moduleLogger, internalProcessingPoolingInterval);
+        EventsBusStartup.Initialize(moduleLogger);
+    }
 
-            EventsBusStartup.Initialize(moduleLogger);
-        }
+    public static void Stop()
+    {
+        QuartzStartup.StopQuartz();
+    }
 
-        public static void Stop()
-        {
-            QuartzStartup.StopQuartz();
-        }
+    private static void ConfigureContainer(
+        string connectionString,
+        IExecutionContextAccessor executionContextAccessor,
+        ILogger logger,
+        IEventsBus eventsBus)
+    {
+        var containerBuilder = new ContainerBuilder();
 
-        private static void ConfigureContainer(
-            string connectionString,
-            IExecutionContextAccessor executionContextAccessor,
-            ILogger logger,
-            IEventsBus eventsBus)
-        {
-            var containerBuilder = new ContainerBuilder();
+        containerBuilder.RegisterModule(new LoggingModule(logger));
 
-            containerBuilder.RegisterModule(new LoggingModule(logger));
+        var loggerFactory = new SerilogLoggerFactory(logger);
+        containerBuilder.RegisterModule(new DataAccessModule(connectionString, loggerFactory));
 
-            var loggerFactory = new SerilogLoggerFactory(logger);
-            containerBuilder.RegisterModule(new DataAccessModule(connectionString, loggerFactory));
+        containerBuilder.RegisterModule(new ProcessingModule());
+        containerBuilder.RegisterModule(new EventsBusModule(eventsBus));
+        containerBuilder.RegisterModule(new MediatorModule());
+        containerBuilder.RegisterModule(new AuthenticationModule());
 
-            containerBuilder.RegisterModule(new ProcessingModule());
-            containerBuilder.RegisterModule(new EventsBusModule(eventsBus));
-            containerBuilder.RegisterModule(new MediatorModule());
-            containerBuilder.RegisterModule(new AuthenticationModule());
+        var domainNotificationsMap = new BiDictionary<string, Type>();
+        domainNotificationsMap.Add("MeetingGroupProposalAcceptedNotification", typeof(MeetingGroupProposalAcceptedNotification));
+        containerBuilder.RegisterModule(new OutboxModule(domainNotificationsMap));
 
-            var domainNotificationsMap = new BiDictionary<string, Type>();
-            domainNotificationsMap.Add("MeetingGroupProposalAcceptedNotification", typeof(MeetingGroupProposalAcceptedNotification));
-            containerBuilder.RegisterModule(new OutboxModule(domainNotificationsMap));
+        BiDictionary<string, Type> internalCommandsMap = new BiDictionary<string, Type>();
+        internalCommandsMap.Add("CreateMember", typeof(CreateMemberCommand));
+        internalCommandsMap.Add("RequestMeetingGroupProposalVerification", typeof(RequestMeetingGroupProposalVerificationCommand));
+        containerBuilder.RegisterModule(new InternalCommandsModule(internalCommandsMap));
 
-            BiDictionary<string, Type> internalCommandsMap = new BiDictionary<string, Type>();
-            internalCommandsMap.Add("CreateMember", typeof(CreateMemberCommand));
-            internalCommandsMap.Add("RequestMeetingGroupProposalVerification", typeof(RequestMeetingGroupProposalVerificationCommand));
-            containerBuilder.RegisterModule(new InternalCommandsModule(internalCommandsMap));
+        containerBuilder.RegisterModule(new QuartzModule());
 
-            containerBuilder.RegisterModule(new QuartzModule());
+        containerBuilder.RegisterInstance(executionContextAccessor);
 
-            containerBuilder.RegisterInstance(executionContextAccessor);
+        _container = containerBuilder.Build();
 
-            _container = containerBuilder.Build();
-
-            AdministrationCompositionRoot.SetContainer(_container);
-        }
+        AdministrationCompositionRoot.SetContainer(_container);
     }
 }

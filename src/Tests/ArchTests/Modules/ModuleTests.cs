@@ -17,113 +17,112 @@ using MediatR;
 using NetArchTest.Rules;
 using NUnit.Framework;
 
-namespace CompanyName.MyMeetings.ArchTests.Modules
+namespace CompanyName.MyMeetings.ArchTests.Modules;
+
+[TestFixture]
+public class ModuleTests : TestBase
 {
-    [TestFixture]
-    public class ModuleTests : TestBase
+    [Test]
+    public void AdministrationModule_DoesNotHave_Dependency_On_Other_Modules()
     {
-        [Test]
-        public void AdministrationModule_DoesNotHave_Dependency_On_Other_Modules()
+        var otherModules = new List<string>
         {
-            var otherModules = new List<string>
-            {
-                MeetingsNamespace, PaymentsNamespace, UserAccessNamespace
-            };
-            List<Assembly> administrationAssemblies = new List<Assembly>
-            {
-                typeof(IAdministrationModule).Assembly,
-                typeof(MeetingGroupLocation).Assembly,
-                typeof(AdministrationContext).Assembly
-            };
-
-            var result = Types.InAssemblies(administrationAssemblies)
-                .That()
-                    .DoNotImplementInterface(typeof(INotificationHandler<>))
-                    .And().DoNotHaveNameEndingWith("IntegrationEventHandler")
-                    .And().DoNotHaveName("EventsBusStartup")
-                .Should()
-                .NotHaveDependencyOnAny(otherModules.ToArray())
-                .GetResult();
-
-            AssertArchTestResult(result);
-        }
-
-        [Test]
-        public void MeetingsModule_DoesNotHave_Dependency_On_Other_Modules()
+            MeetingsNamespace, PaymentsNamespace, UserAccessNamespace
+        };
+        List<Assembly> administrationAssemblies = new List<Assembly>
         {
-            var otherModules = new List<string>
-            {
-                AdministrationNamespace, PaymentsNamespace, UserAccessNamespace
-            };
-            List<Assembly> meetingsAssemblies = new List<Assembly>
-            {
-                typeof(IMeetingsModule).Assembly,
-                typeof(Meeting).Assembly,
-                typeof(MeetingsContext).Assembly
-            };
+            typeof(IAdministrationModule).Assembly,
+            typeof(MeetingGroupLocation).Assembly,
+            typeof(AdministrationContext).Assembly
+        };
 
-            var result = Types.InAssemblies(meetingsAssemblies)
-                .That()
-                .DoNotImplementInterface(typeof(INotificationHandler<>))
-                .And().DoNotHaveNameEndingWith("IntegrationEventHandler")
-                .And().DoNotHaveName("EventsBusStartup")
-                .Should()
-                .NotHaveDependencyOnAny(otherModules.ToArray())
-                .GetResult();
+        var result = Types.InAssemblies(administrationAssemblies)
+            .That()
+            .DoNotImplementInterface(typeof(INotificationHandler<>))
+            .And().DoNotHaveNameEndingWith("IntegrationEventHandler")
+            .And().DoNotHaveName("EventsBusStartup")
+            .Should()
+            .NotHaveDependencyOnAny(otherModules.ToArray())
+            .GetResult();
 
-            AssertArchTestResult(result);
-        }
+        AssertArchTestResult(result);
+    }
 
-        [Test]
-        public void PaymentsModule_DoesNotHave_Dependency_On_Other_Modules()
+    [Test]
+    public void MeetingsModule_DoesNotHave_Dependency_On_Other_Modules()
+    {
+        var otherModules = new List<string>
         {
-            var otherModules = new List<string>
-            {
-                AdministrationNamespace, MeetingsNamespace, UserAccessNamespace
-            };
-            List<Assembly> paymentsAssemblies = new List<Assembly>
-            {
-                typeof(IPaymentsModule).Assembly,
-                typeof(MeetingFee).Assembly,
-                typeof(PaymentsStartup).Assembly
-            };
-
-            var result = Types.InAssemblies(paymentsAssemblies)
-                .That()
-                .DoNotImplementInterface(typeof(INotificationHandler<>))
-                .And().DoNotHaveNameEndingWith("IntegrationEventHandler")
-                .And().DoNotHaveName("EventsBusStartup")
-                .Should()
-                .NotHaveDependencyOnAny(otherModules.ToArray())
-                .GetResult();
-
-            AssertArchTestResult(result);
-        }
-
-        [Test]
-        public void UserAccessModule_DoesNotHave_Dependency_On_Other_Modules()
+            AdministrationNamespace, PaymentsNamespace, UserAccessNamespace
+        };
+        List<Assembly> meetingsAssemblies = new List<Assembly>
         {
-            var otherModules = new List<string>
-            {
-                AdministrationNamespace, MeetingsNamespace, PaymentsNamespace
-            };
-            List<Assembly> userAccessAssemblies = new List<Assembly>
-            {
-                typeof(IUserAccessModule).Assembly,
-                typeof(User).Assembly,
-                typeof(UserAccessContext).Assembly
-            };
+            typeof(IMeetingsModule).Assembly,
+            typeof(Meeting).Assembly,
+            typeof(MeetingsContext).Assembly
+        };
 
-            var result = Types.InAssemblies(userAccessAssemblies)
-                .That()
-                .DoNotImplementInterface(typeof(INotificationHandler<>))
-                .And().DoNotHaveNameEndingWith("IntegrationEventHandler")
-                .And().DoNotHaveName("EventsBusStartup")
-                .Should()
-                .NotHaveDependencyOnAny(otherModules.ToArray())
-                .GetResult();
+        var result = Types.InAssemblies(meetingsAssemblies)
+            .That()
+            .DoNotImplementInterface(typeof(INotificationHandler<>))
+            .And().DoNotHaveNameEndingWith("IntegrationEventHandler")
+            .And().DoNotHaveName("EventsBusStartup")
+            .Should()
+            .NotHaveDependencyOnAny(otherModules.ToArray())
+            .GetResult();
 
-            AssertArchTestResult(result);
-        }
+        AssertArchTestResult(result);
+    }
+
+    [Test]
+    public void PaymentsModule_DoesNotHave_Dependency_On_Other_Modules()
+    {
+        var otherModules = new List<string>
+        {
+            AdministrationNamespace, MeetingsNamespace, UserAccessNamespace
+        };
+        List<Assembly> paymentsAssemblies = new List<Assembly>
+        {
+            typeof(IPaymentsModule).Assembly,
+            typeof(MeetingFee).Assembly,
+            typeof(PaymentsStartup).Assembly
+        };
+
+        var result = Types.InAssemblies(paymentsAssemblies)
+            .That()
+            .DoNotImplementInterface(typeof(INotificationHandler<>))
+            .And().DoNotHaveNameEndingWith("IntegrationEventHandler")
+            .And().DoNotHaveName("EventsBusStartup")
+            .Should()
+            .NotHaveDependencyOnAny(otherModules.ToArray())
+            .GetResult();
+
+        AssertArchTestResult(result);
+    }
+
+    [Test]
+    public void UserAccessModule_DoesNotHave_Dependency_On_Other_Modules()
+    {
+        var otherModules = new List<string>
+        {
+            AdministrationNamespace, MeetingsNamespace, PaymentsNamespace
+        };
+        List<Assembly> userAccessAssemblies = new List<Assembly>
+        {
+            typeof(IUserAccessModule).Assembly,
+            typeof(User).Assembly,
+            typeof(UserAccessContext).Assembly
+        };
+
+        var result = Types.InAssemblies(userAccessAssemblies)
+            .That()
+            .DoNotImplementInterface(typeof(INotificationHandler<>))
+            .And().DoNotHaveNameEndingWith("IntegrationEventHandler")
+            .And().DoNotHaveName("EventsBusStartup")
+            .Should()
+            .NotHaveDependencyOnAny(otherModules.ToArray())
+            .GetResult();
+
+        AssertArchTestResult(result);
     }
 }

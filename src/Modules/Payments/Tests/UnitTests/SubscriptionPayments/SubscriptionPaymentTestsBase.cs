@@ -7,52 +7,51 @@ using CompanyName.MyMeetings.Modules.Payments.Domain.SeedWork;
 using CompanyName.MyMeetings.Modules.Payments.Domain.Subscriptions;
 using CompanyName.MyMeetings.Modules.Payments.Domain.UnitTests.SeedWork;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Domain.UnitTests.SubscriptionPayments
+namespace CompanyName.MyMeetings.Modules.Payments.Domain.UnitTests.SubscriptionPayments;
+
+public class SubscriptionPaymentTestsBase : TestBase
 {
-    public class SubscriptionPaymentTestsBase : TestBase
+    protected class SubscriptionPaymentTestData
     {
-        protected class SubscriptionPaymentTestData
+        public SubscriptionPaymentTestData(PriceList priceList, PayerId payerId, SubscriptionId subscriptionId)
         {
-            public SubscriptionPaymentTestData(PriceList priceList, PayerId payerId, SubscriptionId subscriptionId)
-            {
-                PriceList = priceList;
-                PayerId = payerId;
-                SubscriptionId = subscriptionId;
-            }
-
-            internal PriceList PriceList { get; }
-
-            internal PayerId PayerId { get; }
-
-            internal SubscriptionId SubscriptionId { get; }
+            PriceList = priceList;
+            PayerId = payerId;
+            SubscriptionId = subscriptionId;
         }
 
-        protected SubscriptionPaymentTestData CreateSubscriptionPaymentTestData()
-        {
-            var payerId = new PayerId(Guid.NewGuid());
-            var subscriptionId = new SubscriptionId(Guid.NewGuid());
-            var priceList = CreatePriceList();
+        internal PriceList PriceList { get; }
 
-            var subscriptionPaymentTestData = new SubscriptionPaymentTestData(
-                priceList,
-                payerId,
-                subscriptionId);
+        internal PayerId PayerId { get; }
 
-            return subscriptionPaymentTestData;
-        }
+        internal SubscriptionId SubscriptionId { get; }
+    }
 
-        private PriceList CreatePriceList()
-        {
-            var priceListItem = new PriceListItemData(
-                "PL",
-                SubscriptionPeriod.Month,
-                MoneyValue.Of(60, "PLN"),
-                PriceListItemCategory.New);
+    protected SubscriptionPaymentTestData CreateSubscriptionPaymentTestData()
+    {
+        var payerId = new PayerId(Guid.NewGuid());
+        var subscriptionId = new SubscriptionId(Guid.NewGuid());
+        var priceList = CreatePriceList();
 
-            var priceListItems = new List<PriceListItemData> { priceListItem };
-            var priceList = PriceList.Create(priceListItems, new DirectValueFromPriceListPricingStrategy(priceListItems));
+        var subscriptionPaymentTestData = new SubscriptionPaymentTestData(
+            priceList,
+            payerId,
+            subscriptionId);
 
-            return priceList;
-        }
+        return subscriptionPaymentTestData;
+    }
+
+    private PriceList CreatePriceList()
+    {
+        var priceListItem = new PriceListItemData(
+            "PL",
+            SubscriptionPeriod.Month,
+            MoneyValue.Of(60, "PLN"),
+            PriceListItemCategory.New);
+
+        var priceListItems = new List<PriceListItemData> { priceListItem };
+        var priceList = PriceList.Create(priceListItems, new DirectValueFromPriceListPricingStrategy(priceListItems));
+
+        return priceList;
     }
 }

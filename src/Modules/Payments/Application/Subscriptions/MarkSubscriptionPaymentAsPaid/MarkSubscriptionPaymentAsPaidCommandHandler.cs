@@ -5,27 +5,26 @@ using CompanyName.MyMeetings.Modules.Payments.Domain.SeedWork;
 using CompanyName.MyMeetings.Modules.Payments.Domain.SubscriptionPayments;
 using MediatR;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Application.Subscriptions.MarkSubscriptionPaymentAsPaid
+namespace CompanyName.MyMeetings.Modules.Payments.Application.Subscriptions.MarkSubscriptionPaymentAsPaid;
+
+internal class MarkSubscriptionPaymentAsPaidCommandHandler : ICommandHandler<MarkSubscriptionPaymentAsPaidCommand>
 {
-    internal class MarkSubscriptionPaymentAsPaidCommandHandler : ICommandHandler<MarkSubscriptionPaymentAsPaidCommand>
+    private readonly IAggregateStore _aggregateStore;
+
+    internal MarkSubscriptionPaymentAsPaidCommandHandler(IAggregateStore aggregateStore)
     {
-        private readonly IAggregateStore _aggregateStore;
+        _aggregateStore = aggregateStore;
+    }
 
-        internal MarkSubscriptionPaymentAsPaidCommandHandler(IAggregateStore aggregateStore)
-        {
-            _aggregateStore = aggregateStore;
-        }
+    public async Task<Unit> Handle(MarkSubscriptionPaymentAsPaidCommand command, CancellationToken cancellationToken)
+    {
+        var subscriptionPayment =
+            await _aggregateStore.Load(new SubscriptionPaymentId(command.SubscriptionPaymentId));
 
-        public async Task<Unit> Handle(MarkSubscriptionPaymentAsPaidCommand command, CancellationToken cancellationToken)
-        {
-            var subscriptionPayment =
-                await _aggregateStore.Load(new SubscriptionPaymentId(command.SubscriptionPaymentId));
+        subscriptionPayment.MarkAsPaid();
 
-            subscriptionPayment.MarkAsPaid();
+        _aggregateStore.AppendChanges(subscriptionPayment);
 
-            _aggregateStore.AppendChanges(subscriptionPayment);
-
-            return Unit.Value;
-        }
+        return Unit.Value;
     }
 }

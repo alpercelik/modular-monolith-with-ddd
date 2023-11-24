@@ -1,18 +1,17 @@
 ﻿using CompanyName.MyMeetings.BuildingBlocks.Domain;
 using CompanyName.MyMeetings.Modules.Meetings.Domain.Members;
 
-namespace CompanyName.MyMeetings.Modules.Meetings.Domain.Meetings.Events
+namespace CompanyName.MyMeetings.Modules.Meetings.Domain.Meetings.Events;
+
+public class NewMeetingHostSetDomainEvent : DomainEventBase
 {
-    public class NewMeetingHostSetDomainEvent : DomainEventBase
+    public NewMeetingHostSetDomainEvent(MeetingId meetingId, MemberId hostId)
     {
-        public NewMeetingHostSetDomainEvent(MeetingId meetingId, MemberId hostId)
-        {
-            MeetingId = meetingId;
-            HostId = hostId;
-        }
-
-        public MeetingId MeetingId { get; }
-
-        public MemberId HostId { get; }
+        MeetingId = meetingId;
+        HostId = hostId;
     }
+
+    public MeetingId MeetingId { get; }
+
+    public MemberId HostId { get; }
 }

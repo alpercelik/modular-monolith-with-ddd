@@ -1,17 +1,16 @@
 ﻿using CompanyName.MyMeetings.BuildingBlocks.Domain;
 
-namespace CompanyName.MyMeetings.Modules.Meetings.Domain.Comments.Events
+namespace CompanyName.MyMeetings.Modules.Meetings.Domain.Comments.Events;
+
+public class MeetingCommentEditedDomainEvent : DomainEventBase
 {
-    public class MeetingCommentEditedDomainEvent : DomainEventBase
+    public MeetingCommentId MeetingCommentId { get; }
+
+    public string EditedComment { get; }
+
+    public MeetingCommentEditedDomainEvent(MeetingCommentId meetingCommentId, string editedComment)
     {
-        public MeetingCommentId MeetingCommentId { get; }
-
-        public string EditedComment { get; }
-
-        public MeetingCommentEditedDomainEvent(MeetingCommentId meetingCommentId, string editedComment)
-        {
-            MeetingCommentId = meetingCommentId;
-            EditedComment = editedComment;
-        }
+        MeetingCommentId = meetingCommentId;
+        EditedComment = editedComment;
     }
 }

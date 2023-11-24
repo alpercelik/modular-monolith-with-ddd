@@ -1,7 +1,6 @@
-﻿namespace CompanyName.MyMeetings.Modules.Payments.Infrastructure.Configuration
+﻿namespace CompanyName.MyMeetings.Modules.Payments.Infrastructure.Configuration;
+
+public class DatabaseSchema
 {
-    public class DatabaseSchema
-    {
-        public const string Name = "payments";
-    }
+    public const string Name = "payments";
 }

@@ -5,36 +5,35 @@ using CompanyName.MyMeetings.BuildingBlocks.Infrastructure;
 using CompanyName.MyMeetings.Modules.Payments.Application.Configuration.Commands;
 using CompanyName.MyMeetings.Modules.Payments.Application.Contracts;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Infrastructure.Configuration.Processing
+namespace CompanyName.MyMeetings.Modules.Payments.Infrastructure.Configuration.Processing;
+
+internal class UnitOfWorkCommandHandlerWithResultDecorator<T, TResult> : ICommandHandler<T, TResult>
+    where T : ICommand<TResult>
 {
-    internal class UnitOfWorkCommandHandlerWithResultDecorator<T, TResult> : ICommandHandler<T, TResult>
-        where T : ICommand<TResult>
+    private readonly ICommandHandler<T, TResult> _decorated;
+
+    private readonly IUnitOfWork _unitOfWork;
+
+    public UnitOfWorkCommandHandlerWithResultDecorator(
+        ICommandHandler<T, TResult> decorated,
+        IUnitOfWork unitOfWork)
     {
-        private readonly ICommandHandler<T, TResult> _decorated;
+        _decorated = decorated;
+        _unitOfWork = unitOfWork;
+    }
 
-        private readonly IUnitOfWork _unitOfWork;
+    public async Task<TResult> Handle(T command, CancellationToken cancellationToken)
+    {
+        var result = await this._decorated.Handle(command, cancellationToken);
 
-        public UnitOfWorkCommandHandlerWithResultDecorator(
-            ICommandHandler<T, TResult> decorated,
-            IUnitOfWork unitOfWork)
+        Guid? internalCommandId = null;
+        if (command is InternalCommandBase<TResult>)
         {
-            _decorated = decorated;
-            _unitOfWork = unitOfWork;
+            internalCommandId = command.Id;
         }
 
-        public async Task<TResult> Handle(T command, CancellationToken cancellationToken)
-        {
-            var result = await this._decorated.Handle(command, cancellationToken);
+        await _unitOfWork.CommitAsync(cancellationToken, internalCommandId);
 
-            Guid? internalCommandId = null;
-            if (command is InternalCommandBase<TResult>)
-            {
-                internalCommandId = command.Id;
-            }
-
-            await _unitOfWork.CommitAsync(cancellationToken, internalCommandId);
-
-            return result;
-        }
+        return result;
     }
 }

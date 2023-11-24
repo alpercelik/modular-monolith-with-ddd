@@ -14,50 +14,49 @@ using CompanyName.MyMeetings.Modules.Payments.Domain.SubscriptionRenewalPayments
 using CompanyName.MyMeetings.Modules.Payments.Domain.Subscriptions;
 using Dapper;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Application.Subscriptions.BuySubscriptionRenewal
+namespace CompanyName.MyMeetings.Modules.Payments.Application.Subscriptions.BuySubscriptionRenewal;
+
+internal class BuySubscriptionRenewalCommandHandler : ICommandHandler<BuySubscriptionRenewalCommand, Guid>
 {
-    internal class BuySubscriptionRenewalCommandHandler : ICommandHandler<BuySubscriptionRenewalCommand, Guid>
+    private readonly IAggregateStore _aggregateStore;
+
+    private readonly IPayerContext _payerContext;
+
+    private readonly ISqlConnectionFactory _sqlConnectionFactory;
+
+    internal BuySubscriptionRenewalCommandHandler(
+        IAggregateStore aggregateStore,
+        IPayerContext payerContext,
+        ISqlConnectionFactory sqlConnectionFactory)
     {
-        private readonly IAggregateStore _aggregateStore;
+        _aggregateStore = aggregateStore;
+        _payerContext = payerContext;
+        _sqlConnectionFactory = sqlConnectionFactory;
+    }
 
-        private readonly IPayerContext _payerContext;
+    public async Task<Guid> Handle(BuySubscriptionRenewalCommand command, CancellationToken cancellationToken)
+    {
+        var priceList = await PriceListFactory.CreatePriceList(_sqlConnectionFactory.GetOpenConnection());
 
-        private readonly ISqlConnectionFactory _sqlConnectionFactory;
+        var subscriptionId = new SubscriptionId(command.SubscriptionId);
 
-        internal BuySubscriptionRenewalCommandHandler(
-            IAggregateStore aggregateStore,
-            IPayerContext payerContext,
-            ISqlConnectionFactory sqlConnectionFactory)
+        var subscription = await _aggregateStore.Load(new SubscriptionId(command.SubscriptionId));
+
+        if (subscription == null)
         {
-            _aggregateStore = aggregateStore;
-            _payerContext = payerContext;
-            _sqlConnectionFactory = sqlConnectionFactory;
+            throw new InvalidCommandException(new List<string> { "Subscription for renewal must exist." });
         }
 
-        public async Task<Guid> Handle(BuySubscriptionRenewalCommand command, CancellationToken cancellationToken)
-        {
-            var priceList = await PriceListFactory.CreatePriceList(_sqlConnectionFactory.GetOpenConnection());
+        var subscriptionRenewalPayment = SubscriptionRenewalPayment.Buy(
+            _payerContext.PayerId,
+            subscriptionId,
+            SubscriptionPeriod.Of(command.SubscriptionTypeCode),
+            command.CountryCode,
+            MoneyValue.Of(command.Value, command.Currency),
+            priceList);
 
-            var subscriptionId = new SubscriptionId(command.SubscriptionId);
+        _aggregateStore.AppendChanges(subscriptionRenewalPayment);
 
-            var subscription = await _aggregateStore.Load(new SubscriptionId(command.SubscriptionId));
-
-            if (subscription == null)
-            {
-                throw new InvalidCommandException(new List<string> { "Subscription for renewal must exist." });
-            }
-
-            var subscriptionRenewalPayment = SubscriptionRenewalPayment.Buy(
-                _payerContext.PayerId,
-                subscriptionId,
-                SubscriptionPeriod.Of(command.SubscriptionTypeCode),
-                command.CountryCode,
-                MoneyValue.Of(command.Value, command.Currency),
-                priceList);
-
-            _aggregateStore.AppendChanges(subscriptionRenewalPayment);
-
-            return subscriptionRenewalPayment.Id;
-        }
+        return subscriptionRenewalPayment.Id;
     }
 }

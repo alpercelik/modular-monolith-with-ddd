@@ -1,11 +1,10 @@
 ﻿using System.Threading.Tasks;
 
-namespace CompanyName.MyMeetings.BuildingBlocks.Application.Outbox
-{
-    public interface IOutbox
-    {
-        void Add(OutboxMessage message);
+namespace CompanyName.MyMeetings.BuildingBlocks.Application.Outbox;
 
-        Task Save();
-    }
+public interface IOutbox
+{
+    void Add(OutboxMessage message);
+
+    Task Save();
 }

@@ -5,24 +5,23 @@ using CompanyName.MyMeetings.Modules.UserAccess.Application.Configuration.Comman
 using CompanyName.MyMeetings.Modules.UserAccess.Application.UserRegistrations.SendUserRegistrationConfirmationEmail;
 using MediatR;
 
-namespace CompanyName.MyMeetings.Modules.UserAccess.Application.UserRegistrations.RegisterNewUser
+namespace CompanyName.MyMeetings.Modules.UserAccess.Application.UserRegistrations.RegisterNewUser;
+
+public class NewUserRegisteredEnqueueEmailConfirmationHandler : INotificationHandler<NewUserRegisteredNotification>
 {
-    public class NewUserRegisteredEnqueueEmailConfirmationHandler : INotificationHandler<NewUserRegisteredNotification>
+    private readonly ICommandsScheduler _commandsScheduler;
+
+    public NewUserRegisteredEnqueueEmailConfirmationHandler(ICommandsScheduler commandsScheduler)
     {
-        private readonly ICommandsScheduler _commandsScheduler;
+        _commandsScheduler = commandsScheduler;
+    }
 
-        public NewUserRegisteredEnqueueEmailConfirmationHandler(ICommandsScheduler commandsScheduler)
-        {
-            _commandsScheduler = commandsScheduler;
-        }
-
-        public async Task Handle(NewUserRegisteredNotification notification, CancellationToken cancellationToken)
-        {
-            await _commandsScheduler.EnqueueAsync(new SendUserRegistrationConfirmationEmailCommand(
-                Guid.NewGuid(),
-                notification.DomainEvent.UserRegistrationId,
-                notification.DomainEvent.Email,
-                notification.DomainEvent.ConfirmLink));
-        }
+    public async Task Handle(NewUserRegisteredNotification notification, CancellationToken cancellationToken)
+    {
+        await _commandsScheduler.EnqueueAsync(new SendUserRegistrationConfirmationEmailCommand(
+            Guid.NewGuid(),
+            notification.DomainEvent.UserRegistrationId,
+            notification.DomainEvent.Email,
+            notification.DomainEvent.ConfirmLink));
     }
 }

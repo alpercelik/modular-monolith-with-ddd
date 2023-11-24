@@ -5,124 +5,123 @@ using CompanyName.MyMeetings.Modules.Payments.Domain.Subscriptions;
 using CompanyName.MyMeetings.Modules.Payments.Domain.UnitTests.SeedWork;
 using NUnit.Framework;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Domain.UnitTests.PriceListItems
+namespace CompanyName.MyMeetings.Modules.Payments.Domain.UnitTests.PriceListItems;
+
+[TestFixture]
+public class PriceListItemTests : TestBase
 {
-    [TestFixture]
-    public class PriceListItemTests : TestBase
+    [Test]
+    public void CreatePriceListItem_IsSuccessful()
     {
-        [Test]
-        public void CreatePriceListItem_IsSuccessful()
-        {
-            // Act
-            var priceListItem = PriceListItem.Create(
-                "BRA",
-                SubscriptionPeriod.Month,
-                PriceListItemCategory.New,
-                MoneyValue.Of(50, "BRL"));
+        // Act
+        var priceListItem = PriceListItem.Create(
+            "BRA",
+            SubscriptionPeriod.Month,
+            PriceListItemCategory.New,
+            MoneyValue.Of(50, "BRL"));
 
-            // Assert
-            var priceListItemCreated = AssertPublishedDomainEvent<PriceListItemCreatedDomainEvent>(priceListItem);
+        // Assert
+        var priceListItemCreated = AssertPublishedDomainEvent<PriceListItemCreatedDomainEvent>(priceListItem);
 
-            Assert.That(priceListItemCreated.PriceListItemId, Is.EqualTo(priceListItem.Id));
-        }
+        Assert.That(priceListItemCreated.PriceListItemId, Is.EqualTo(priceListItem.Id));
+    }
 
-        [Test]
-        public void ActivatePriceListItem_IsSuccessful()
-        {
-            // Arrange
-            var priceListItem = PriceListItem.Create(
-                "BRA",
-                SubscriptionPeriod.Month,
-                PriceListItemCategory.New,
-                MoneyValue.Of(50, "BRL"));
-            priceListItem.Deactivate();
+    [Test]
+    public void ActivatePriceListItem_IsSuccessful()
+    {
+        // Arrange
+        var priceListItem = PriceListItem.Create(
+            "BRA",
+            SubscriptionPeriod.Month,
+            PriceListItemCategory.New,
+            MoneyValue.Of(50, "BRL"));
+        priceListItem.Deactivate();
 
-            // Act
-            priceListItem.Activate();
+        // Act
+        priceListItem.Activate();
 
-            // Assert
-            var priceListItemActivated = AssertPublishedDomainEvent<PriceListItemActivatedDomainEvent>(priceListItem);
+        // Assert
+        var priceListItemActivated = AssertPublishedDomainEvent<PriceListItemActivatedDomainEvent>(priceListItem);
 
-            Assert.That(priceListItemActivated.PriceListItemId, Is.EqualTo(priceListItem.Id));
-        }
+        Assert.That(priceListItemActivated.PriceListItemId, Is.EqualTo(priceListItem.Id));
+    }
 
-        [Test]
-        public void ActivatePriceListItem_WhenItemIsActive_ThenActivationIgnored()
-        {
-            // Arrange
-            var priceListItem = PriceListItem.Create(
-                "BRA",
-                SubscriptionPeriod.Month,
-                PriceListItemCategory.New,
-                MoneyValue.Of(50, "BRL"));
+    [Test]
+    public void ActivatePriceListItem_WhenItemIsActive_ThenActivationIgnored()
+    {
+        // Arrange
+        var priceListItem = PriceListItem.Create(
+            "BRA",
+            SubscriptionPeriod.Month,
+            PriceListItemCategory.New,
+            MoneyValue.Of(50, "BRL"));
 
-            // Act
-            priceListItem.Activate();
+        // Act
+        priceListItem.Activate();
 
-            // Assert
-            AssertDomainEventNotPublished<PriceListItemActivatedDomainEvent>(priceListItem);
-        }
+        // Assert
+        AssertDomainEventNotPublished<PriceListItemActivatedDomainEvent>(priceListItem);
+    }
 
-        [Test]
-        public void DeactivatePriceListItem_IsSuccessful()
-        {
-            // Arrange
-            var priceListItem = PriceListItem.Create(
-                "BRA",
-                SubscriptionPeriod.Month,
-                PriceListItemCategory.New,
-                MoneyValue.Of(50, "BRL"));
+    [Test]
+    public void DeactivatePriceListItem_IsSuccessful()
+    {
+        // Arrange
+        var priceListItem = PriceListItem.Create(
+            "BRA",
+            SubscriptionPeriod.Month,
+            PriceListItemCategory.New,
+            MoneyValue.Of(50, "BRL"));
 
-            // Act
-            priceListItem.Deactivate();
+        // Act
+        priceListItem.Deactivate();
 
-            // Assert
-            var priceListItemActivated = AssertPublishedDomainEvent<PriceListItemDeactivatedDomainEvent>(priceListItem);
+        // Assert
+        var priceListItemActivated = AssertPublishedDomainEvent<PriceListItemDeactivatedDomainEvent>(priceListItem);
 
-            Assert.That(priceListItemActivated.PriceListItemId, Is.EqualTo(priceListItem.Id));
-        }
+        Assert.That(priceListItemActivated.PriceListItemId, Is.EqualTo(priceListItem.Id));
+    }
 
-        [Test]
-        public void DeactivatePriceListItem_WhenItemNotActive_ThenDeactivationIgnored()
-        {
-            // Arrange
-            var priceListItem = PriceListItem.Create(
-                "BRA",
-                SubscriptionPeriod.Month,
-                PriceListItemCategory.New,
-                MoneyValue.Of(50, "BRL"));
-            priceListItem.Deactivate();
+    [Test]
+    public void DeactivatePriceListItem_WhenItemNotActive_ThenDeactivationIgnored()
+    {
+        // Arrange
+        var priceListItem = PriceListItem.Create(
+            "BRA",
+            SubscriptionPeriod.Month,
+            PriceListItemCategory.New,
+            MoneyValue.Of(50, "BRL"));
+        priceListItem.Deactivate();
 
-            // Act
-            priceListItem.Deactivate();
+        // Act
+        priceListItem.Deactivate();
 
-            // Assert
-            var priceListItemActivatedEvents = AssertPublishedDomainEvents<PriceListItemDeactivatedDomainEvent>(priceListItem);
+        // Assert
+        var priceListItemActivatedEvents = AssertPublishedDomainEvents<PriceListItemDeactivatedDomainEvent>(priceListItem);
 
-            Assert.That(priceListItemActivatedEvents.Count, Is.EqualTo(1));
-        }
+        Assert.That(priceListItemActivatedEvents.Count, Is.EqualTo(1));
+    }
 
-        [Test]
-        public void ChangePriceListItem_IsSuccessful()
-        {
-            // Arrange
-            var priceListItem = PriceListItem.Create(
-                "BRA",
-                SubscriptionPeriod.Month,
-                PriceListItemCategory.New,
-                MoneyValue.Of(50, "BRL"));
+    [Test]
+    public void ChangePriceListItem_IsSuccessful()
+    {
+        // Arrange
+        var priceListItem = PriceListItem.Create(
+            "BRA",
+            SubscriptionPeriod.Month,
+            PriceListItemCategory.New,
+            MoneyValue.Of(50, "BRL"));
 
-            // Act
-            priceListItem.ChangeAttributes(
-                "ARG",
-                SubscriptionPeriod.HalfYear,
-                PriceListItemCategory.Renewal,
-                MoneyValue.Of(25, "ARS"));
+        // Act
+        priceListItem.ChangeAttributes(
+            "ARG",
+            SubscriptionPeriod.HalfYear,
+            PriceListItemCategory.Renewal,
+            MoneyValue.Of(25, "ARS"));
 
-            // Assert
-            var priceListItemAttributesChangedEvent = AssertPublishedDomainEvent<PriceListItemAttributesChangedDomainEvent>(priceListItem);
+        // Assert
+        var priceListItemAttributesChangedEvent = AssertPublishedDomainEvent<PriceListItemAttributesChangedDomainEvent>(priceListItem);
 
-            Assert.That(priceListItemAttributesChangedEvent.PriceListItemId, Is.EqualTo(priceListItem.Id));
-        }
+        Assert.That(priceListItemAttributesChangedEvent.PriceListItemId, Is.EqualTo(priceListItem.Id));
     }
 }

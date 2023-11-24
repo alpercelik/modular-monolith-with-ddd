@@ -1,13 +1,12 @@
 ﻿using FluentValidation;
 
-namespace CompanyName.MyMeetings.Modules.UserAccess.Application.Authentication.Authenticate
+namespace CompanyName.MyMeetings.Modules.UserAccess.Application.Authentication.Authenticate;
+
+internal class AuthenticateCommandValidator : AbstractValidator<AuthenticateCommand>
 {
-    internal class AuthenticateCommandValidator : AbstractValidator<AuthenticateCommand>
+    public AuthenticateCommandValidator()
     {
-        public AuthenticateCommandValidator()
-        {
-            this.RuleFor(x => x.Login).NotEmpty().WithMessage("Login cannot be empty");
-            this.RuleFor(x => x.Password).NotEmpty().WithMessage("Password cannot be empty");
-        }
+        this.RuleFor(x => x.Login).NotEmpty().WithMessage("Login cannot be empty");
+        this.RuleFor(x => x.Password).NotEmpty().WithMessage("Password cannot be empty");
     }
 }

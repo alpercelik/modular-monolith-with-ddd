@@ -1,6 +1,5 @@
-﻿namespace CompanyName.MyMeetings.Modules.UserAccess.Infrastructure.Configuration.Processing
+﻿namespace CompanyName.MyMeetings.Modules.UserAccess.Infrastructure.Configuration.Processing;
+
+public interface IRecurringCommand
 {
-    public interface IRecurringCommand
-    {
-    }
 }

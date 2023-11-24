@@ -1,15 +1,14 @@
 ﻿using System;
 using CompanyName.MyMeetings.Modules.Payments.Application.Contracts;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Application.Subscriptions.ExpireSubscriptionPayment
-{
-    public class ExpireSubscriptionPaymentCommand : CommandBase
-    {
-        public ExpireSubscriptionPaymentCommand(Guid paymentId)
-        {
-            PaymentId = paymentId;
-        }
+namespace CompanyName.MyMeetings.Modules.Payments.Application.Subscriptions.ExpireSubscriptionPayment;
 
-        public Guid PaymentId { get; }
+public class ExpireSubscriptionPaymentCommand : CommandBase
+{
+    public ExpireSubscriptionPaymentCommand(Guid paymentId)
+    {
+        PaymentId = paymentId;
     }
+
+    public Guid PaymentId { get; }
 }

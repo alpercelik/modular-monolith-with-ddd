@@ -1,12 +1,11 @@
 ﻿using System.Collections.Generic;
 using CompanyName.MyMeetings.BuildingBlocks.Domain;
 
-namespace CompanyName.MyMeetings.BuildingBlocks.Infrastructure.DomainEventsDispatching
-{
-    public interface IDomainEventsAccessor
-    {
-        IReadOnlyCollection<IDomainEvent> GetAllDomainEvents();
+namespace CompanyName.MyMeetings.BuildingBlocks.Infrastructure.DomainEventsDispatching;
 
-        void ClearAllDomainEvents();
-    }
+public interface IDomainEventsAccessor
+{
+    IReadOnlyCollection<IDomainEvent> GetAllDomainEvents();
+
+    void ClearAllDomainEvents();
 }

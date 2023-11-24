@@ -7,47 +7,46 @@ using CompanyName.MyMeetings.Modules.Meetings.Application.MeetingGroupProposals.
 using CompanyName.MyMeetings.Modules.Meetings.Domain.Members;
 using Dapper;
 
-namespace CompanyName.MyMeetings.Modules.Meetings.Application.MeetingGroupProposals.GetMemberMeetingGroupProposals
+namespace CompanyName.MyMeetings.Modules.Meetings.Application.MeetingGroupProposals.GetMemberMeetingGroupProposals;
+
+internal class GetMemberMeetingGroupProposalsQueryHandler : IQueryHandler<GetMemberMeetingGroupProposalsQuery, List<MeetingGroupProposalDto>>
 {
-    internal class GetMemberMeetingGroupProposalsQueryHandler : IQueryHandler<GetMemberMeetingGroupProposalsQuery, List<MeetingGroupProposalDto>>
+    private readonly ISqlConnectionFactory _sqlConnectionFactory;
+
+    private readonly IMemberContext _memberContext;
+
+    public GetMemberMeetingGroupProposalsQueryHandler(
+        ISqlConnectionFactory sqlConnectionFactory,
+        IMemberContext memberContext)
     {
-        private readonly ISqlConnectionFactory _sqlConnectionFactory;
+        _sqlConnectionFactory = sqlConnectionFactory;
+        _memberContext = memberContext;
+    }
 
-        private readonly IMemberContext _memberContext;
+    public async Task<List<MeetingGroupProposalDto>> Handle(GetMemberMeetingGroupProposalsQuery query, CancellationToken cancellationToken)
+    {
+        var connection = _sqlConnectionFactory.GetOpenConnection();
 
-        public GetMemberMeetingGroupProposalsQueryHandler(
-            ISqlConnectionFactory sqlConnectionFactory,
-            IMemberContext memberContext)
-        {
-            _sqlConnectionFactory = sqlConnectionFactory;
-            _memberContext = memberContext;
-        }
+        string sql = "SELECT " +
+                     $"[MeetingGroupProposal].[Id] AS [{nameof(MeetingGroupProposalDto.Id)}], " +
+                     $"[MeetingGroupProposal].[Name] AS [{nameof(MeetingGroupProposalDto.Name)}], " +
+                     $"[MeetingGroupProposal].[ProposalUserId] AS [{nameof(MeetingGroupProposalDto.ProposalUserId)}], " +
+                     $"[MeetingGroupProposal].[LocationCity] AS [{nameof(MeetingGroupProposalDto.LocationCity)}], " +
+                     $"[MeetingGroupProposal].[LocationCountryCode] AS [{nameof(MeetingGroupProposalDto.LocationCountryCode)}], " +
+                     $"[MeetingGroupProposal].[Description] AS [{nameof(MeetingGroupProposalDto.Description)}], " +
+                     $"[MeetingGroupProposal].[ProposalDate] AS [{nameof(MeetingGroupProposalDto.ProposalDate)}], " +
+                     $"[MeetingGroupProposal].[StatusCode] AS [{nameof(MeetingGroupProposalDto.StatusCode)}] " +
+                     "FROM [meetings].[v_MeetingGroupProposals] AS [MeetingGroupProposal] " +
+                     "WHERE [MeetingGroupProposal].ProposalUserId = @MemberId " +
+                     "ORDER BY [MeetingGroupProposal].[Name]";
 
-        public async Task<List<MeetingGroupProposalDto>> Handle(GetMemberMeetingGroupProposalsQuery query, CancellationToken cancellationToken)
-        {
-            var connection = _sqlConnectionFactory.GetOpenConnection();
+        var meetingGroupProposals = await connection.QueryAsync<MeetingGroupProposalDto>(
+            sql,
+            new
+            {
+                MemberId = _memberContext.MemberId.Value
+            });
 
-            string sql = "SELECT " +
-                         $"[MeetingGroupProposal].[Id] AS [{nameof(MeetingGroupProposalDto.Id)}], " +
-                         $"[MeetingGroupProposal].[Name] AS [{nameof(MeetingGroupProposalDto.Name)}], " +
-                         $"[MeetingGroupProposal].[ProposalUserId] AS [{nameof(MeetingGroupProposalDto.ProposalUserId)}], " +
-                         $"[MeetingGroupProposal].[LocationCity] AS [{nameof(MeetingGroupProposalDto.LocationCity)}], " +
-                         $"[MeetingGroupProposal].[LocationCountryCode] AS [{nameof(MeetingGroupProposalDto.LocationCountryCode)}], " +
-                         $"[MeetingGroupProposal].[Description] AS [{nameof(MeetingGroupProposalDto.Description)}], " +
-                         $"[MeetingGroupProposal].[ProposalDate] AS [{nameof(MeetingGroupProposalDto.ProposalDate)}], " +
-                         $"[MeetingGroupProposal].[StatusCode] AS [{nameof(MeetingGroupProposalDto.StatusCode)}] " +
-                         "FROM [meetings].[v_MeetingGroupProposals] AS [MeetingGroupProposal] " +
-                         "WHERE [MeetingGroupProposal].ProposalUserId = @MemberId " +
-                         "ORDER BY [MeetingGroupProposal].[Name]";
-
-            var meetingGroupProposals = await connection.QueryAsync<MeetingGroupProposalDto>(
-                sql,
-                new
-                {
-                    MemberId = _memberContext.MemberId.Value
-                });
-
-            return meetingGroupProposals.AsList();
-        }
+        return meetingGroupProposals.AsList();
     }
 }

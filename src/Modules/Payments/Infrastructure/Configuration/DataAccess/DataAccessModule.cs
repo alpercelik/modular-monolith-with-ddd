@@ -11,59 +11,58 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Logging;
 using SqlStreamStore;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Infrastructure.Configuration.DataAccess
+namespace CompanyName.MyMeetings.Modules.Payments.Infrastructure.Configuration.DataAccess;
+
+internal class DataAccessModule : Autofac.Module
 {
-    internal class DataAccessModule : Autofac.Module
+    private readonly string _databaseConnectionString;
+    private readonly ILoggerFactory _loggerFactory;
+
+    internal DataAccessModule(string databaseConnectionString, ILoggerFactory loggerFactory)
     {
-        private readonly string _databaseConnectionString;
-        private readonly ILoggerFactory _loggerFactory;
+        _databaseConnectionString = databaseConnectionString;
+        _loggerFactory = loggerFactory;
+    }
 
-        internal DataAccessModule(string databaseConnectionString, ILoggerFactory loggerFactory)
+    protected override void Load(ContainerBuilder builder)
+    {
+        builder.RegisterType<SqlConnectionFactory>()
+            .As<ISqlConnectionFactory>()
+            .WithParameter("connectionString", _databaseConnectionString)
+            .InstancePerLifetimeScope();
+
+        IStreamStore streamStore = new MsSqlStreamStore(new MsSqlStreamStoreSettings(_databaseConnectionString)
         {
-            _databaseConnectionString = databaseConnectionString;
-            _loggerFactory = loggerFactory;
-        }
+            Schema = DatabaseSchema.Name
+        });
 
-        protected override void Load(ContainerBuilder builder)
-        {
-            builder.RegisterType<SqlConnectionFactory>()
-                .As<ISqlConnectionFactory>()
-                .WithParameter("connectionString", _databaseConnectionString)
-                .InstancePerLifetimeScope();
+        builder.RegisterInstance(streamStore);
 
-            IStreamStore streamStore = new MsSqlStreamStore(new MsSqlStreamStoreSettings(_databaseConnectionString)
-            {
-                Schema = DatabaseSchema.Name
-            });
+        builder.RegisterType<SqlStreamAggregateStore>()
+            .As<IAggregateStore>()
+            .InstancePerLifetimeScope();
 
-            builder.RegisterInstance(streamStore);
+        builder.RegisterType<SqlServerCheckpointStore>()
+            .As<ICheckpointStore>()
+            .InstancePerLifetimeScope();
 
-            builder.RegisterType<SqlStreamAggregateStore>()
-                .As<IAggregateStore>()
-                .InstancePerLifetimeScope();
+        var applicationAssembly = typeof(IProjector).Assembly;
+        builder.RegisterAssemblyTypes(applicationAssembly)
+            .Where(type => type.Name.EndsWith("Projector"))
+            .AsImplementedInterfaces()
+            .InstancePerLifetimeScope()
+            .FindConstructorsWith(new AllConstructorFinder());
 
-            builder.RegisterType<SqlServerCheckpointStore>()
-                .As<ICheckpointStore>()
-                .InstancePerLifetimeScope();
+        builder.RegisterType<SubscriptionsManager>()
+            .As<SubscriptionsManager>()
+            .SingleInstance();
 
-            var applicationAssembly = typeof(IProjector).Assembly;
-            builder.RegisterAssemblyTypes(applicationAssembly)
-                .Where(type => type.Name.EndsWith("Projector"))
-                .AsImplementedInterfaces()
-                .InstancePerLifetimeScope()
-                .FindConstructorsWith(new AllConstructorFinder());
+        var infrastructureAssembly = ThisAssembly;
 
-            builder.RegisterType<SubscriptionsManager>()
-                .As<SubscriptionsManager>()
-                .SingleInstance();
-
-            var infrastructureAssembly = ThisAssembly;
-
-            builder.RegisterAssemblyTypes(infrastructureAssembly)
-                .Where(type => type.Name.EndsWith("Repository"))
-                .AsImplementedInterfaces()
-                .InstancePerLifetimeScope()
-                .FindConstructorsWith(new AllConstructorFinder());
-        }
+        builder.RegisterAssemblyTypes(infrastructureAssembly)
+            .Where(type => type.Name.EndsWith("Repository"))
+            .AsImplementedInterfaces()
+            .InstancePerLifetimeScope()
+            .FindConstructorsWith(new AllConstructorFinder());
     }
 }

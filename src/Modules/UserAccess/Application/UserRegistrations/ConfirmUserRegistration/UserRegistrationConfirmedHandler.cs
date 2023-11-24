@@ -5,29 +5,28 @@ using CompanyName.MyMeetings.Modules.UserAccess.Domain.UserRegistrations.Events;
 using CompanyName.MyMeetings.Modules.UserAccess.Domain.Users;
 using MediatR;
 
-namespace CompanyName.MyMeetings.Modules.UserAccess.Application.UserRegistrations.ConfirmUserRegistration
+namespace CompanyName.MyMeetings.Modules.UserAccess.Application.UserRegistrations.ConfirmUserRegistration;
+
+public class UserRegistrationConfirmedHandler : INotificationHandler<UserRegistrationConfirmedDomainEvent>
 {
-    public class UserRegistrationConfirmedHandler : INotificationHandler<UserRegistrationConfirmedDomainEvent>
+    private readonly IUserRegistrationRepository _userRegistrationRepository;
+
+    private readonly IUserRepository _userRepository;
+
+    public UserRegistrationConfirmedHandler(
+        IUserRegistrationRepository userRegistrationRepository,
+        IUserRepository userRepository)
     {
-        private readonly IUserRegistrationRepository _userRegistrationRepository;
+        _userRegistrationRepository = userRegistrationRepository;
+        _userRepository = userRepository;
+    }
 
-        private readonly IUserRepository _userRepository;
+    public async Task Handle(UserRegistrationConfirmedDomainEvent @event, CancellationToken cancellationToken)
+    {
+        var userRegistration = await _userRegistrationRepository.GetByIdAsync(@event.UserRegistrationId);
 
-        public UserRegistrationConfirmedHandler(
-            IUserRegistrationRepository userRegistrationRepository,
-            IUserRepository userRepository)
-        {
-            _userRegistrationRepository = userRegistrationRepository;
-            _userRepository = userRepository;
-        }
+        var user = userRegistration.CreateUser();
 
-        public async Task Handle(UserRegistrationConfirmedDomainEvent @event, CancellationToken cancellationToken)
-        {
-            var userRegistration = await _userRegistrationRepository.GetByIdAsync(@event.UserRegistrationId);
-
-            var user = userRegistration.CreateUser();
-
-            await _userRepository.AddAsync(user);
-        }
+        await _userRepository.AddAsync(user);
     }
 }

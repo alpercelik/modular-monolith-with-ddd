@@ -6,31 +6,30 @@ using CompanyName.MyMeetings.Modules.Payments.Domain.SeedWork;
 using CompanyName.MyMeetings.Modules.Payments.IntegrationEvents;
 using MediatR;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Application.MeetingFees.MarkMeetingFeeAsPaid
+namespace CompanyName.MyMeetings.Modules.Payments.Application.MeetingFees.MarkMeetingFeeAsPaid;
+
+public class MeetingFeePaidNotificationHandler : INotificationHandler<MeetingFeePaidNotification>
 {
-    public class MeetingFeePaidNotificationHandler : INotificationHandler<MeetingFeePaidNotification>
+    private readonly IEventsBus _eventsBus;
+
+    private readonly IAggregateStore _aggregateStore;
+
+    public MeetingFeePaidNotificationHandler(IEventsBus eventsBus, IAggregateStore aggregateStore)
     {
-        private readonly IEventsBus _eventsBus;
+        _eventsBus = eventsBus;
+        _aggregateStore = aggregateStore;
+    }
 
-        private readonly IAggregateStore _aggregateStore;
+    public async Task Handle(MeetingFeePaidNotification notification, CancellationToken cancellationToken)
+    {
+        var meetingFee = await _aggregateStore.Load(new MeetingFeeId(notification.DomainEvent.MeetingFeeId));
 
-        public MeetingFeePaidNotificationHandler(IEventsBus eventsBus, IAggregateStore aggregateStore)
-        {
-            _eventsBus = eventsBus;
-            _aggregateStore = aggregateStore;
-        }
+        var meetingFeeSnapshot = meetingFee.GetSnapshot();
 
-        public async Task Handle(MeetingFeePaidNotification notification, CancellationToken cancellationToken)
-        {
-            var meetingFee = await _aggregateStore.Load(new MeetingFeeId(notification.DomainEvent.MeetingFeeId));
-
-            var meetingFeeSnapshot = meetingFee.GetSnapshot();
-
-            _eventsBus.Publish(new MeetingFeePaidIntegrationEvent(
-                notification.Id,
-                notification.DomainEvent.OccurredOn,
-                meetingFeeSnapshot.PayerId,
-                meetingFeeSnapshot.MeetingId));
-        }
+        _eventsBus.Publish(new MeetingFeePaidIntegrationEvent(
+            notification.Id,
+            notification.DomainEvent.OccurredOn,
+            meetingFeeSnapshot.PayerId,
+            meetingFeeSnapshot.MeetingId));
     }
 }

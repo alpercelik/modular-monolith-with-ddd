@@ -1,22 +1,21 @@
 ﻿using CompanyName.MyMeetings.BuildingBlocks.Domain;
 
-namespace CompanyName.MyMeetings.Modules.Administration.Domain.MeetingGroupProposals
+namespace CompanyName.MyMeetings.Modules.Administration.Domain.MeetingGroupProposals;
+
+public class MeetingGroupLocation : ValueObject
 {
-    public class MeetingGroupLocation : ValueObject
+    private MeetingGroupLocation(string city, string countryCode)
     {
-        private MeetingGroupLocation(string city, string countryCode)
-        {
-            City = city;
-            CountryCode = countryCode;
-        }
+        City = city;
+        CountryCode = countryCode;
+    }
 
-        public string City { get; }
+    public string City { get; }
 
-        public string CountryCode { get; }
+    public string CountryCode { get; }
 
-        public static MeetingGroupLocation Create(string city, string countryCode)
-        {
-            return new MeetingGroupLocation(city, countryCode);
-        }
+    public static MeetingGroupLocation Create(string city, string countryCode)
+    {
+        return new MeetingGroupLocation(city, countryCode);
     }
 }

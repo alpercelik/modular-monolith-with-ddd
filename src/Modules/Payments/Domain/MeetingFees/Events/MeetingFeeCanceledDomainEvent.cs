@@ -1,18 +1,17 @@
 ﻿using System;
 using CompanyName.MyMeetings.BuildingBlocks.Domain;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Domain.MeetingFees.Events
+namespace CompanyName.MyMeetings.Modules.Payments.Domain.MeetingFees.Events;
+
+public class MeetingFeeCanceledDomainEvent : DomainEventBase
 {
-    public class MeetingFeeCanceledDomainEvent : DomainEventBase
+    public MeetingFeeCanceledDomainEvent(Guid meetingFeeId, string status)
     {
-        public MeetingFeeCanceledDomainEvent(Guid meetingFeeId, string status)
-        {
-            MeetingFeeId = meetingFeeId;
-            Status = status;
-        }
-
-        public Guid MeetingFeeId { get; }
-
-        public string Status { get; }
+        MeetingFeeId = meetingFeeId;
+        Status = status;
     }
+
+    public Guid MeetingFeeId { get; }
+
+    public string Status { get; }
 }

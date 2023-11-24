@@ -5,85 +5,84 @@ using CompanyName.MyMeetings.Modules.Payments.Domain.SubscriptionPayments.Rules;
 using CompanyName.MyMeetings.Modules.Payments.Domain.Subscriptions;
 using NUnit.Framework;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Domain.UnitTests.SubscriptionPayments
+namespace CompanyName.MyMeetings.Modules.Payments.Domain.UnitTests.SubscriptionPayments;
+
+[TestFixture]
+public class SubscriptionPaymentTests : SubscriptionPaymentTestsBase
 {
-    [TestFixture]
-    public class SubscriptionPaymentTests : SubscriptionPaymentTestsBase
+    [Test]
+    public void BuySubscription_IsSuccessful()
     {
-        [Test]
-        public void BuySubscription_IsSuccessful()
-        {
-            // Arrange
-            var subscriptionPaymentTestData = CreateSubscriptionPaymentTestData();
+        // Arrange
+        var subscriptionPaymentTestData = CreateSubscriptionPaymentTestData();
 
-            // Act
-            var subscriptionPayment = SubscriptionPayment.Buy(
+        // Act
+        var subscriptionPayment = SubscriptionPayment.Buy(
+            subscriptionPaymentTestData.PayerId,
+            SubscriptionPeriod.Month,
+            "PL",
+            MoneyValue.Of(60, "PLN"),
+            subscriptionPaymentTestData.PriceList);
+
+        // Assert
+        AssertPublishedDomainEvent<SubscriptionPaymentCreatedDomainEvent>(subscriptionPayment);
+    }
+
+    [Test]
+    public void BuySubscriptionRenewal_WhenPriceDoesNotExist_IsNotPossible()
+    {
+        // Arrange
+        var subscriptionPaymentTestData = CreateSubscriptionPaymentTestData();
+
+        // Act & Assert
+        AssertBrokenRule<PriceOfferMustMatchPriceInPriceListRule>(() =>
+        {
+            SubscriptionPayment.Buy(
                 subscriptionPaymentTestData.PayerId,
                 SubscriptionPeriod.Month,
                 "PL",
-                MoneyValue.Of(60, "PLN"),
+                MoneyValue.Of(50, "PLN"),
                 subscriptionPaymentTestData.PriceList);
+        });
+    }
 
-            // Assert
-            AssertPublishedDomainEvent<SubscriptionPaymentCreatedDomainEvent>(subscriptionPayment);
-        }
+    [Test]
+    public void PaySubscription_IsSuccessful()
+    {
+        // Arrange
+        var subscriptionPaymentTestData = CreateSubscriptionPaymentTestData();
 
-        [Test]
-        public void BuySubscriptionRenewal_WhenPriceDoesNotExist_IsNotPossible()
-        {
-            // Arrange
-            var subscriptionPaymentTestData = CreateSubscriptionPaymentTestData();
+        var subscriptionPayment = SubscriptionPayment.Buy(
+            subscriptionPaymentTestData.PayerId,
+            SubscriptionPeriod.Month,
+            "PL",
+            MoneyValue.Of(60, "PLN"),
+            subscriptionPaymentTestData.PriceList);
 
-            // Act & Assert
-            AssertBrokenRule<PriceOfferMustMatchPriceInPriceListRule>(() =>
-            {
-                SubscriptionPayment.Buy(
-                    subscriptionPaymentTestData.PayerId,
-                    SubscriptionPeriod.Month,
-                    "PL",
-                    MoneyValue.Of(50, "PLN"),
-                    subscriptionPaymentTestData.PriceList);
-            });
-        }
+        // Act
+        subscriptionPayment.MarkAsPaid();
 
-        [Test]
-        public void PaySubscription_IsSuccessful()
-        {
-            // Arrange
-            var subscriptionPaymentTestData = CreateSubscriptionPaymentTestData();
+        // Assert
+        AssertPublishedDomainEvent<SubscriptionPaymentPaidDomainEvent>(subscriptionPayment);
+    }
 
-            var subscriptionPayment = SubscriptionPayment.Buy(
-                subscriptionPaymentTestData.PayerId,
-                SubscriptionPeriod.Month,
-                "PL",
-                MoneyValue.Of(60, "PLN"),
-                subscriptionPaymentTestData.PriceList);
+    [Test]
+    public void ExpireSubscription_IsSuccessful()
+    {
+        // Arrange
+        var subscriptionPaymentTestData = CreateSubscriptionPaymentTestData();
 
-            // Act
-            subscriptionPayment.MarkAsPaid();
+        var subscriptionPayment = SubscriptionPayment.Buy(
+            subscriptionPaymentTestData.PayerId,
+            SubscriptionPeriod.Month,
+            "PL",
+            MoneyValue.Of(60, "PLN"),
+            subscriptionPaymentTestData.PriceList);
 
-            // Assert
-            AssertPublishedDomainEvent<SubscriptionPaymentPaidDomainEvent>(subscriptionPayment);
-        }
+        // Act
+        subscriptionPayment.Expire();
 
-        [Test]
-        public void ExpireSubscription_IsSuccessful()
-        {
-            // Arrange
-            var subscriptionPaymentTestData = CreateSubscriptionPaymentTestData();
-
-            var subscriptionPayment = SubscriptionPayment.Buy(
-                subscriptionPaymentTestData.PayerId,
-                SubscriptionPeriod.Month,
-                "PL",
-                MoneyValue.Of(60, "PLN"),
-                subscriptionPaymentTestData.PriceList);
-
-            // Act
-            subscriptionPayment.Expire();
-
-            // Assert
-            AssertPublishedDomainEvent<SubscriptionPaymentExpiredDomainEvent>(subscriptionPayment);
-        }
+        // Assert
+        AssertPublishedDomainEvent<SubscriptionPaymentExpiredDomainEvent>(subscriptionPayment);
     }
 }

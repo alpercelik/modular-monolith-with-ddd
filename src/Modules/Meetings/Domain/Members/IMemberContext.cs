@@ -1,7 +1,6 @@
-﻿namespace CompanyName.MyMeetings.Modules.Meetings.Domain.Members
+﻿namespace CompanyName.MyMeetings.Modules.Meetings.Domain.Members;
+
+public interface IMemberContext
 {
-    public interface IMemberContext
-    {
-        MemberId MemberId { get; }
-    }
+    MemberId MemberId { get; }
 }

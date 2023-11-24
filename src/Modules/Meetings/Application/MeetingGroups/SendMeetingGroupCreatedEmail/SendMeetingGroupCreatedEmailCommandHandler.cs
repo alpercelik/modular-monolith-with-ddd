@@ -10,46 +10,45 @@ using CompanyName.MyMeetings.Modules.Meetings.Application.Members;
 using Dapper;
 using MediatR;
 
-namespace CompanyName.MyMeetings.Modules.Meetings.Application.MeetingGroups.SendMeetingGroupCreatedEmail
+namespace CompanyName.MyMeetings.Modules.Meetings.Application.MeetingGroups.SendMeetingGroupCreatedEmail;
+
+internal class SendMeetingGroupCreatedEmailCommandHandler : ICommandHandler<SendMeetingGroupCreatedEmailCommand>
 {
-    internal class SendMeetingGroupCreatedEmailCommandHandler : ICommandHandler<SendMeetingGroupCreatedEmailCommand>
+    private readonly ISqlConnectionFactory _sqlConnectionFactory;
+    private readonly IEmailSender _emailSender;
+
+    public SendMeetingGroupCreatedEmailCommandHandler(
+        ISqlConnectionFactory sqlConnectionFactory,
+        IEmailSender emailSender)
     {
-        private readonly ISqlConnectionFactory _sqlConnectionFactory;
-        private readonly IEmailSender _emailSender;
+        _sqlConnectionFactory = sqlConnectionFactory;
+        _emailSender = emailSender;
+    }
 
-        public SendMeetingGroupCreatedEmailCommandHandler(
-            ISqlConnectionFactory sqlConnectionFactory,
-            IEmailSender emailSender)
-        {
-            _sqlConnectionFactory = sqlConnectionFactory;
-            _emailSender = emailSender;
-        }
+    public async Task<Unit> Handle(SendMeetingGroupCreatedEmailCommand request, CancellationToken cancellationToken)
+    {
+        var connection = _sqlConnectionFactory.GetOpenConnection();
 
-        public async Task<Unit> Handle(SendMeetingGroupCreatedEmailCommand request, CancellationToken cancellationToken)
-        {
-            var connection = _sqlConnectionFactory.GetOpenConnection();
+        var meetingGroup = await connection.QuerySingleAsync<MeetingGroupDto>(
+            "SELECT " +
+            "[MeetingGroup].[Name], " +
+            "[MeetingGroup].[LocationCountryCode], " +
+            "[MeetingGroup].[LocationCity] " +
+            "FROM [meetings].[v_MeetingGroups] AS [MeetingGroup] " +
+            "WHERE [MeetingGroup].[Id] = @Id", new
+            {
+                Id = request.MeetingGroupId.Value
+            });
 
-            var meetingGroup = await connection.QuerySingleAsync<MeetingGroupDto>(
-                "SELECT " +
-                                  "[MeetingGroup].[Name], " +
-                                  "[MeetingGroup].[LocationCountryCode], " +
-                                  "[MeetingGroup].[LocationCity] " +
-                                  "FROM [meetings].[v_MeetingGroups] AS [MeetingGroup] " +
-                                  "WHERE [MeetingGroup].[Id] = @Id", new
-                                  {
-                                      Id = request.MeetingGroupId.Value
-                                  });
+        var member = await MembersQueryHelper.GetMember(request.CreatorId, connection);
 
-            var member = await MembersQueryHelper.GetMember(request.CreatorId, connection);
+        var email = new EmailMessage(
+            member.Email,
+            $"{meetingGroup.Name} created",
+            $"{meetingGroup.Name} created at {meetingGroup.LocationCity}, {meetingGroup.LocationCountryCode}");
 
-            var email = new EmailMessage(
-                member.Email,
-                $"{meetingGroup.Name} created",
-                $"{meetingGroup.Name} created at {meetingGroup.LocationCity}, {meetingGroup.LocationCountryCode}");
+        _emailSender.SendEmail(email);
 
-            _emailSender.SendEmail(email);
-
-            return Unit.Value;
-        }
+        return Unit.Value;
     }
 }

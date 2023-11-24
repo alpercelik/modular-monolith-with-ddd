@@ -7,87 +7,86 @@ using CompanyName.MyMeetings.Modules.Payments.Domain.SubscriptionRenewalPayments
 using CompanyName.MyMeetings.Modules.Payments.Domain.SubscriptionRenewalPayments.Rules;
 using CompanyName.MyMeetings.Modules.Payments.Domain.Subscriptions;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Domain.SubscriptionRenewalPayments
+namespace CompanyName.MyMeetings.Modules.Payments.Domain.SubscriptionRenewalPayments;
+
+public class SubscriptionRenewalPayment : AggregateRoot
 {
-    public class SubscriptionRenewalPayment : AggregateRoot
+    private PayerId _payerId;
+
+    private SubscriptionId _subscriptionId;
+
+    private SubscriptionPeriod _subscriptionPeriod;
+
+    private string _countryCode;
+
+    private SubscriptionRenewalPaymentStatus _subscriptionRenewalPaymentStatus;
+
+    private MoneyValue _value;
+
+    public static SubscriptionRenewalPayment Buy(
+        PayerId payerId,
+        SubscriptionId subscriptionId,
+        SubscriptionPeriod period,
+        string countryCode,
+        MoneyValue priceOffer,
+        PriceList priceList)
     {
-        private PayerId _payerId;
+        var priceInPriceList = priceList.GetPrice(countryCode, period, PriceListItemCategory.Renewal);
+        CheckRule(new PriceOfferMustMatchPriceInPriceListRule(priceOffer, priceInPriceList));
 
-        private SubscriptionId _subscriptionId;
+        var subscriptionRenewalPayment = new SubscriptionRenewalPayment();
 
-        private SubscriptionPeriod _subscriptionPeriod;
+        var subscriptionRenewalPaymentCreated = new SubscriptionRenewalPaymentCreatedDomainEvent(
+            Guid.NewGuid(),
+            payerId.Value,
+            subscriptionId.Value,
+            period.Code,
+            countryCode,
+            SubscriptionRenewalPaymentStatus.WaitingForPayment.Code,
+            priceOffer.Value,
+            priceOffer.Currency);
 
-        private string _countryCode;
+        subscriptionRenewalPayment.Apply(subscriptionRenewalPaymentCreated);
+        subscriptionRenewalPayment.AddDomainEvent(subscriptionRenewalPaymentCreated);
 
-        private SubscriptionRenewalPaymentStatus _subscriptionRenewalPaymentStatus;
+        return subscriptionRenewalPayment;
+    }
 
-        private MoneyValue _value;
+    public SubscriptionRenewalPaymentSnapshot GetSnapshot()
+    {
+        return new SubscriptionRenewalPaymentSnapshot(new SubscriptionRenewalPaymentId(this.Id), _payerId, _subscriptionPeriod, _countryCode);
+    }
 
-        public static SubscriptionRenewalPayment Buy(
-            PayerId payerId,
-            SubscriptionId subscriptionId,
-            SubscriptionPeriod period,
-            string countryCode,
-            MoneyValue priceOffer,
-            PriceList priceList)
-        {
-            var priceInPriceList = priceList.GetPrice(countryCode, period, PriceListItemCategory.Renewal);
-            CheckRule(new PriceOfferMustMatchPriceInPriceListRule(priceOffer, priceInPriceList));
+    public void MarkRenewalAsPaid()
+    {
+        SubscriptionRenewalPaymentPaidDomainEvent @event =
+            new SubscriptionRenewalPaymentPaidDomainEvent(
+                this.Id,
+                this._subscriptionId.Value,
+                SubscriptionRenewalPaymentStatus.Paid.Code);
 
-            var subscriptionRenewalPayment = new SubscriptionRenewalPayment();
+        this.Apply(@event);
+        this.AddDomainEvent(@event);
+    }
 
-            var subscriptionRenewalPaymentCreated = new SubscriptionRenewalPaymentCreatedDomainEvent(
-                Guid.NewGuid(),
-                payerId.Value,
-                subscriptionId.Value,
-                period.Code,
-                countryCode,
-                SubscriptionRenewalPaymentStatus.WaitingForPayment.Code,
-                priceOffer.Value,
-                priceOffer.Currency);
+    protected override void Apply(IDomainEvent @event)
+    {
+        this.When((dynamic)@event);
+    }
 
-            subscriptionRenewalPayment.Apply(subscriptionRenewalPaymentCreated);
-            subscriptionRenewalPayment.AddDomainEvent(subscriptionRenewalPaymentCreated);
+    private void When(SubscriptionRenewalPaymentCreatedDomainEvent @event)
+    {
+        this.Id = @event.SubscriptionRenewalPaymentId;
+        _payerId = new PayerId(@event.PayerId);
+        _subscriptionId = new SubscriptionId(@event.SubscriptionId);
+        _subscriptionPeriod = SubscriptionPeriod.Of(@event.SubscriptionPeriodCode);
+        _countryCode = @event.CountryCode;
+        _subscriptionRenewalPaymentStatus = SubscriptionRenewalPaymentStatus.Of(@event.Status);
+        _value = MoneyValue.Of(@event.Value, @event.Currency);
+    }
 
-            return subscriptionRenewalPayment;
-        }
-
-        public SubscriptionRenewalPaymentSnapshot GetSnapshot()
-        {
-            return new SubscriptionRenewalPaymentSnapshot(new SubscriptionRenewalPaymentId(this.Id), _payerId, _subscriptionPeriod, _countryCode);
-        }
-
-        public void MarkRenewalAsPaid()
-        {
-            SubscriptionRenewalPaymentPaidDomainEvent @event =
-                new SubscriptionRenewalPaymentPaidDomainEvent(
-                    this.Id,
-                    this._subscriptionId.Value,
-                    SubscriptionRenewalPaymentStatus.Paid.Code);
-
-            this.Apply(@event);
-            this.AddDomainEvent(@event);
-        }
-
-        protected override void Apply(IDomainEvent @event)
-        {
-            this.When((dynamic)@event);
-        }
-
-        private void When(SubscriptionRenewalPaymentCreatedDomainEvent @event)
-        {
-            this.Id = @event.SubscriptionRenewalPaymentId;
-            _payerId = new PayerId(@event.PayerId);
-            _subscriptionId = new SubscriptionId(@event.SubscriptionId);
-            _subscriptionPeriod = SubscriptionPeriod.Of(@event.SubscriptionPeriodCode);
-            _countryCode = @event.CountryCode;
-            _subscriptionRenewalPaymentStatus = SubscriptionRenewalPaymentStatus.Of(@event.Status);
-            _value = MoneyValue.Of(@event.Value, @event.Currency);
-        }
-
-        private void When(SubscriptionRenewalPaymentPaidDomainEvent @event)
-        {
-            _subscriptionRenewalPaymentStatus = SubscriptionRenewalPaymentStatus.Of(@event.Status);
-        }
+    private void When(SubscriptionRenewalPaymentPaidDomainEvent @event)
+    {
+        _subscriptionRenewalPaymentStatus = SubscriptionRenewalPaymentStatus.Of(@event.Status);
     }
 }

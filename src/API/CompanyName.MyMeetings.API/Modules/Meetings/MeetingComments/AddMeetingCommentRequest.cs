@@ -1,11 +1,10 @@
 ﻿using System;
 
-namespace CompanyName.MyMeetings.API.Modules.Meetings.MeetingComments
-{
-    public class AddMeetingCommentRequest
-    {
-        public Guid MeetingId { get; set; }
+namespace CompanyName.MyMeetings.API.Modules.Meetings.MeetingComments;
 
-        public string Comment { get; set; }
-    }
+public class AddMeetingCommentRequest
+{
+    public Guid MeetingId { get; set; }
+
+    public string Comment { get; set; }
 }

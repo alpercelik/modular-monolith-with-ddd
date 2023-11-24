@@ -1,15 +1,14 @@
 ﻿using System;
 
-namespace CompanyName.MyMeetings.Modules.Meetings.Application.Members
+namespace CompanyName.MyMeetings.Modules.Meetings.Application.Members;
+
+public class MemberDto
 {
-    public class MemberDto
-    {
-        public Guid Id { get; set; }
+    public Guid Id { get; set; }
 
-        public string Name { get; set; }
+    public string Name { get; set; }
 
-        public string Email { get; set; }
+    public string Email { get; set; }
 
-        public string Login { get; set; }
-    }
+    public string Login { get; set; }
 }

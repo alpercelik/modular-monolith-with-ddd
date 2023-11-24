@@ -1,13 +1,12 @@
 ﻿using System;
 
-namespace CompanyName.MyMeetings.Modules.Administration.Infrastructure.Configuration.Processing.Inbox
+namespace CompanyName.MyMeetings.Modules.Administration.Infrastructure.Configuration.Processing.Inbox;
+
+public class InboxMessageDto
 {
-    public class InboxMessageDto
-    {
-        public Guid Id { get; set; }
+    public Guid Id { get; set; }
 
-        public string Type { get; set; }
+    public string Type { get; set; }
 
-        public string Data { get; set; }
-    }
+    public string Data { get; set; }
 }

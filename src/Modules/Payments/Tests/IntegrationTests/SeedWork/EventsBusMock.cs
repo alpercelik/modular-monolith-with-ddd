@@ -3,42 +3,41 @@ using System.Linq;
 using System.Threading.Tasks;
 using CompanyName.MyMeetings.BuildingBlocks.Infrastructure.EventBus;
 
-namespace CompanyName.MyMeetings.Modules.Payments.IntegrationTests.SeedWork
+namespace CompanyName.MyMeetings.Modules.Payments.IntegrationTests.SeedWork;
+
+public class EventsBusMock : IEventsBus
 {
-    public class EventsBusMock : IEventsBus
+    private readonly IList<IntegrationEvent> _publishedEvents;
+
+    public EventsBusMock()
     {
-        private readonly IList<IntegrationEvent> _publishedEvents;
+        _publishedEvents = new List<IntegrationEvent>();
+    }
 
-        public EventsBusMock()
-        {
-            _publishedEvents = new List<IntegrationEvent>();
-        }
+    public void Dispose()
+    {
+    }
 
-        public void Dispose()
-        {
-        }
+    public Task Publish<T>(T @event)
+        where T : IntegrationEvent
+    {
+        _publishedEvents.Add(@event);
 
-        public Task Publish<T>(T @event)
-            where T : IntegrationEvent
-        {
-            _publishedEvents.Add(@event);
+        return Task.CompletedTask;
+    }
 
-            return Task.CompletedTask;
-        }
+    public T GetLastPublishedEvent<T>()
+        where T : IntegrationEvent
+    {
+        return _publishedEvents.OfType<T>().Last();
+    }
 
-        public T GetLastPublishedEvent<T>()
-            where T : IntegrationEvent
-        {
-            return _publishedEvents.OfType<T>().Last();
-        }
+    public void Subscribe<T>(IIntegrationEventHandler<T> handler)
+        where T : IntegrationEvent
+    {
+    }
 
-        public void Subscribe<T>(IIntegrationEventHandler<T> handler)
-            where T : IntegrationEvent
-        {
-        }
-
-        public void StartConsuming()
-        {
-        }
+    public void StartConsuming()
+    {
     }
 }

@@ -1,7 +1,6 @@
-﻿namespace CompanyName.MyMeetings.API.Modules.Meetings.Meetings
+﻿namespace CompanyName.MyMeetings.API.Modules.Meetings.Meetings;
+
+public class AddMeetingAttendeeRequest
 {
-    public class AddMeetingAttendeeRequest
-    {
-        public int GuestsNumber { get; set; }
-    }
+    public int GuestsNumber { get; set; }
 }

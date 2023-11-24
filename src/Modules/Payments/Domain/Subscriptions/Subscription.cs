@@ -5,101 +5,100 @@ using CompanyName.MyMeetings.Modules.Payments.Domain.SubscriptionPayments;
 using CompanyName.MyMeetings.Modules.Payments.Domain.SubscriptionRenewalPayments;
 using CompanyName.MyMeetings.Modules.Payments.Domain.Subscriptions.Events;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Domain.Subscriptions
+namespace CompanyName.MyMeetings.Modules.Payments.Domain.Subscriptions;
+
+public class Subscription : AggregateRoot
 {
-    public class Subscription : AggregateRoot
+    private SubscriberId _subscriberId;
+
+    private SubscriptionPeriod _subscriptionPeriod;
+
+    private SubscriptionStatus _status;
+
+    private string _countryCode;
+
+    private DateTime _expirationDate;
+
+    private Subscription()
     {
-        private SubscriberId _subscriberId;
+    }
 
-        private SubscriptionPeriod _subscriptionPeriod;
+    public void Renew(
+        SubscriptionRenewalPaymentSnapshot subscriptionRenewalPayment)
+    {
+        var expirationDate = SubscriptionDateExpirationCalculator.CalculateForRenewal(
+            _expirationDate, subscriptionRenewalPayment.SubscriptionPeriod);
 
-        private SubscriptionStatus _status;
+        SubscriptionRenewedDomainEvent subscriptionRenewedDomainEvent = new SubscriptionRenewedDomainEvent(
+            this.Id,
+            expirationDate,
+            subscriptionRenewalPayment.PayerId.Value,
+            subscriptionRenewalPayment.SubscriptionPeriod.Code,
+            SubscriptionStatus.Active.Code);
 
-        private string _countryCode;
+        this.Apply(subscriptionRenewedDomainEvent);
+        this.AddDomainEvent(subscriptionRenewedDomainEvent);
+    }
 
-        private DateTime _expirationDate;
-
-        private Subscription()
+    public void Expire()
+    {
+        if (_expirationDate < SystemClock.Now)
         {
+            SubscriptionExpiredDomainEvent subscriptionExpiredDomainEvent =
+                new SubscriptionExpiredDomainEvent(this.Id, SubscriptionStatus.Expired.Code);
+
+            this.When(subscriptionExpiredDomainEvent);
+            this.AddDomainEvent(subscriptionExpiredDomainEvent);
         }
+    }
 
-        public void Renew(
-            SubscriptionRenewalPaymentSnapshot subscriptionRenewalPayment)
-        {
-            var expirationDate = SubscriptionDateExpirationCalculator.CalculateForRenewal(
-                _expirationDate, subscriptionRenewalPayment.SubscriptionPeriod);
+    public static Subscription Create(
+        SubscriptionPaymentSnapshot subscriptionPayment)
+    {
+        var subscription = new Subscription();
 
-            SubscriptionRenewedDomainEvent subscriptionRenewedDomainEvent = new SubscriptionRenewedDomainEvent(
-                this.Id,
-                expirationDate,
-                subscriptionRenewalPayment.PayerId.Value,
-                subscriptionRenewalPayment.SubscriptionPeriod.Code,
-                SubscriptionStatus.Active.Code);
+        var expirationDate = SubscriptionDateExpirationCalculator.CalculateForNew(subscriptionPayment.SubscriptionPeriod);
 
-            this.Apply(subscriptionRenewedDomainEvent);
-            this.AddDomainEvent(subscriptionRenewedDomainEvent);
-        }
+        var subscriptionCreatedDomainEvent = new SubscriptionCreatedDomainEvent(
+            subscriptionPayment.Id.Value,
+            Guid.NewGuid(),
+            subscriptionPayment.PayerId.Value,
+            subscriptionPayment.SubscriptionPeriod.Code,
+            subscriptionPayment.CountryCode,
+            expirationDate,
+            SubscriptionStatus.Active.Code);
 
-        public void Expire()
-        {
-            if (_expirationDate < SystemClock.Now)
-            {
-                SubscriptionExpiredDomainEvent subscriptionExpiredDomainEvent =
-                    new SubscriptionExpiredDomainEvent(this.Id, SubscriptionStatus.Expired.Code);
+        subscription.Apply(subscriptionCreatedDomainEvent);
+        subscription.AddDomainEvent(subscriptionCreatedDomainEvent);
 
-                this.When(subscriptionExpiredDomainEvent);
-                this.AddDomainEvent(subscriptionExpiredDomainEvent);
-            }
-        }
+        return subscription;
+    }
 
-        public static Subscription Create(
-            SubscriptionPaymentSnapshot subscriptionPayment)
-        {
-            var subscription = new Subscription();
+    protected sealed override void Apply(IDomainEvent @event)
+    {
+        this.When((dynamic)@event);
+    }
 
-            var expirationDate = SubscriptionDateExpirationCalculator.CalculateForNew(subscriptionPayment.SubscriptionPeriod);
+    private void When(SubscriptionCreatedDomainEvent @event)
+    {
+        this.Id = @event.SubscriptionId;
+        _subscriberId = new SubscriberId(@event.PayerId);
+        _subscriptionPeriod = SubscriptionPeriod.Of(@event.SubscriptionPeriodCode);
+        _countryCode = @event.CountryCode;
+        _status = SubscriptionStatus.Of(@event.Status);
+        _expirationDate = @event.ExpirationDate;
+    }
 
-            var subscriptionCreatedDomainEvent = new SubscriptionCreatedDomainEvent(
-                subscriptionPayment.Id.Value,
-                Guid.NewGuid(),
-                subscriptionPayment.PayerId.Value,
-                subscriptionPayment.SubscriptionPeriod.Code,
-                subscriptionPayment.CountryCode,
-                expirationDate,
-                SubscriptionStatus.Active.Code);
+    private void When(SubscriptionRenewedDomainEvent @event)
+    {
+        this.Id = @event.SubscriptionId;
+        _subscriptionPeriod = SubscriptionPeriod.Of(@event.SubscriptionPeriodCode);
+        _status = SubscriptionStatus.Of(@event.Status);
+        _expirationDate = @event.ExpirationDate;
+    }
 
-            subscription.Apply(subscriptionCreatedDomainEvent);
-            subscription.AddDomainEvent(subscriptionCreatedDomainEvent);
-
-            return subscription;
-        }
-
-        protected sealed override void Apply(IDomainEvent @event)
-        {
-            this.When((dynamic)@event);
-        }
-
-        private void When(SubscriptionCreatedDomainEvent @event)
-        {
-            this.Id = @event.SubscriptionId;
-            _subscriberId = new SubscriberId(@event.PayerId);
-            _subscriptionPeriod = SubscriptionPeriod.Of(@event.SubscriptionPeriodCode);
-            _countryCode = @event.CountryCode;
-            _status = SubscriptionStatus.Of(@event.Status);
-            _expirationDate = @event.ExpirationDate;
-        }
-
-        private void When(SubscriptionRenewedDomainEvent @event)
-        {
-            this.Id = @event.SubscriptionId;
-            _subscriptionPeriod = SubscriptionPeriod.Of(@event.SubscriptionPeriodCode);
-            _status = SubscriptionStatus.Of(@event.Status);
-            _expirationDate = @event.ExpirationDate;
-        }
-
-        private void When(SubscriptionExpiredDomainEvent @event)
-        {
-            _status = SubscriptionStatus.Of(@event.Status);
-        }
+    private void When(SubscriptionExpiredDomainEvent @event)
+    {
+        _status = SubscriptionStatus.Of(@event.Status);
     }
 }

@@ -1,17 +1,16 @@
 ﻿using CompanyName.MyMeetings.Modules.Meetings.Domain.MeetingGroups;
 
-namespace CompanyName.MyMeetings.Modules.Meetings.Domain.Members
+namespace CompanyName.MyMeetings.Modules.Meetings.Domain.Members;
+
+public class MeetingGroupMemberData
 {
-    public class MeetingGroupMemberData
+    public MeetingGroupId MeetingGroupId { get; }
+
+    public MemberId MemberId { get; }
+
+    public MeetingGroupMemberData(MeetingGroupId meetingGroupId, MemberId memberId)
     {
-        public MeetingGroupId MeetingGroupId { get; }
-
-        public MemberId MemberId { get; }
-
-        public MeetingGroupMemberData(MeetingGroupId meetingGroupId, MemberId memberId)
-        {
-            MemberId = memberId;
-            MeetingGroupId = meetingGroupId;
-        }
+        MemberId = memberId;
+        MeetingGroupId = meetingGroupId;
     }
 }

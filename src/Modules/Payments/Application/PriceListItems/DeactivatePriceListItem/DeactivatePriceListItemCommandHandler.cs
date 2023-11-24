@@ -7,31 +7,30 @@ using CompanyName.MyMeetings.Modules.Payments.Domain.PriceListItems;
 using CompanyName.MyMeetings.Modules.Payments.Domain.SeedWork;
 using MediatR;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Application.PriceListItems.DeactivatePriceListItem
+namespace CompanyName.MyMeetings.Modules.Payments.Application.PriceListItems.DeactivatePriceListItem;
+
+internal class DeactivatePriceListItemCommandHandler : ICommandHandler<DeactivatePriceListItemCommand>
 {
-    internal class DeactivatePriceListItemCommandHandler : ICommandHandler<DeactivatePriceListItemCommand>
+    private readonly IAggregateStore _aggregateStore;
+
+    public DeactivatePriceListItemCommandHandler(IAggregateStore aggregateStore)
     {
-        private readonly IAggregateStore _aggregateStore;
+        _aggregateStore = aggregateStore;
+    }
 
-        public DeactivatePriceListItemCommandHandler(IAggregateStore aggregateStore)
+    public async Task<Unit> Handle(DeactivatePriceListItemCommand command, CancellationToken cancellationToken)
+    {
+        var priceListItem = await _aggregateStore.Load(new PriceListItemId(command.PriceListItemId));
+
+        if (priceListItem == null)
         {
-            _aggregateStore = aggregateStore;
+            throw new InvalidCommandException(new List<string> { "Pricelist item for deactivation must exist." });
         }
 
-        public async Task<Unit> Handle(DeactivatePriceListItemCommand command, CancellationToken cancellationToken)
-        {
-            var priceListItem = await _aggregateStore.Load(new PriceListItemId(command.PriceListItemId));
+        priceListItem.Deactivate();
 
-            if (priceListItem == null)
-            {
-                throw new InvalidCommandException(new List<string> { "Pricelist item for deactivation must exist." });
-            }
+        _aggregateStore.AppendChanges(priceListItem);
 
-            priceListItem.Deactivate();
-
-            _aggregateStore.AppendChanges(priceListItem);
-
-            return Unit.Value;
-        }
+        return Unit.Value;
     }
 }

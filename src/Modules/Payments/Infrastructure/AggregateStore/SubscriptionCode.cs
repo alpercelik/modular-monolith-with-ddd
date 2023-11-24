@@ -1,7 +1,6 @@
-﻿namespace CompanyName.MyMeetings.Modules.Payments.Infrastructure.AggregateStore
+﻿namespace CompanyName.MyMeetings.Modules.Payments.Infrastructure.AggregateStore;
+
+public enum SubscriptionCode
 {
-    public enum SubscriptionCode
-    {
-        All
-    }
+    All
 }

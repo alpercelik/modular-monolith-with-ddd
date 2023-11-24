@@ -8,45 +8,44 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CompanyName.MyMeetings.API.Modules.UserAccess
+namespace CompanyName.MyMeetings.API.Modules.UserAccess;
+
+[Route("userAccess/[controller]")]
+[ApiController]
+public class UserRegistrationsController : ControllerBase
 {
-    [Route("userAccess/[controller]")]
-    [ApiController]
-    public class UserRegistrationsController : ControllerBase
+    private readonly IUserAccessModule _userAccessModule;
+
+    public UserRegistrationsController(IUserAccessModule userAccessModule)
     {
-        private readonly IUserAccessModule _userAccessModule;
+        _userAccessModule = userAccessModule;
+    }
 
-        public UserRegistrationsController(IUserAccessModule userAccessModule)
-        {
-            _userAccessModule = userAccessModule;
-        }
+    [NoPermissionRequired]
+    [AllowAnonymous]
+    [HttpPost("")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> RegisterNewUser(RegisterNewUserRequest request)
+    {
+        await _userAccessModule.ExecuteCommandAsync(new RegisterNewUserCommand(
+            request.Login,
+            request.Password,
+            request.Email,
+            request.FirstName,
+            request.LastName,
+            request.ConfirmLink));
 
-        [NoPermissionRequired]
-        [AllowAnonymous]
-        [HttpPost("")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> RegisterNewUser(RegisterNewUserRequest request)
-        {
-            await _userAccessModule.ExecuteCommandAsync(new RegisterNewUserCommand(
-                request.Login,
-                request.Password,
-                request.Email,
-                request.FirstName,
-                request.LastName,
-                request.ConfirmLink));
+        return Ok();
+    }
 
-            return Ok();
-        }
+    [NoPermissionRequired]
+    [AllowAnonymous]
+    [HttpPatch("{userRegistrationId}/confirm")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> ConfirmRegistration(Guid userRegistrationId)
+    {
+        await _userAccessModule.ExecuteCommandAsync(new ConfirmUserRegistrationCommand(userRegistrationId));
 
-        [NoPermissionRequired]
-        [AllowAnonymous]
-        [HttpPatch("{userRegistrationId}/confirm")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> ConfirmRegistration(Guid userRegistrationId)
-        {
-            await _userAccessModule.ExecuteCommandAsync(new ConfirmUserRegistrationCommand(userRegistrationId));
-
-            return Ok();
-        }
+        return Ok();
     }
 }

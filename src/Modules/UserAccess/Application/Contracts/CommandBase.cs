@@ -1,34 +1,33 @@
 ﻿using System;
 
-namespace CompanyName.MyMeetings.Modules.UserAccess.Application.Contracts
+namespace CompanyName.MyMeetings.Modules.UserAccess.Application.Contracts;
+
+public abstract class CommandBase : ICommand
 {
-    public abstract class CommandBase : ICommand
+    public Guid Id { get; }
+
+    protected CommandBase()
     {
-        public Guid Id { get; }
-
-        protected CommandBase()
-        {
-            this.Id = Guid.NewGuid();
-        }
-
-        protected CommandBase(Guid id)
-        {
-            this.Id = id;
-        }
+        this.Id = Guid.NewGuid();
     }
 
-    public abstract class CommandBase<TResult> : ICommand<TResult>
+    protected CommandBase(Guid id)
     {
-        public Guid Id { get; }
+        this.Id = id;
+    }
+}
 
-        protected CommandBase()
-        {
-            this.Id = Guid.NewGuid();
-        }
+public abstract class CommandBase<TResult> : ICommand<TResult>
+{
+    public Guid Id { get; }
 
-        protected CommandBase(Guid id)
-        {
-            this.Id = id;
-        }
+    protected CommandBase()
+    {
+        this.Id = Guid.NewGuid();
+    }
+
+    protected CommandBase(Guid id)
+    {
+        this.Id = id;
     }
 }

@@ -1,6 +1,5 @@
-﻿namespace CompanyName.MyMeetings.BuildingBlocks.Domain
+﻿namespace CompanyName.MyMeetings.BuildingBlocks.Domain;
+
+public interface IAggregateRoot
 {
-    public interface IAggregateRoot
-    {
-    }
 }

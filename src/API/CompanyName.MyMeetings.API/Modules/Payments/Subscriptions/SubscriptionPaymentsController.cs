@@ -5,27 +5,26 @@ using CompanyName.MyMeetings.Modules.Payments.Application.Subscriptions.MarkSubs
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CompanyName.MyMeetings.API.Modules.Payments.Subscriptions
+namespace CompanyName.MyMeetings.API.Modules.Payments.Subscriptions;
+
+[Route("api/payments/subscriptionPayments")]
+[ApiController]
+public class SubscriptionPaymentsController : ControllerBase
 {
-    [Route("api/payments/subscriptionPayments")]
-    [ApiController]
-    public class SubscriptionPaymentsController : ControllerBase
+    private readonly IPaymentsModule _meetingsModule;
+
+    public SubscriptionPaymentsController(IPaymentsModule meetingsModule)
     {
-        private readonly IPaymentsModule _meetingsModule;
+        _meetingsModule = meetingsModule;
+    }
 
-        public SubscriptionPaymentsController(IPaymentsModule meetingsModule)
-        {
-            _meetingsModule = meetingsModule;
-        }
+    [HttpPost]
+    [HasPermission(PaymentsPermissions.RegisterPayment)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> RegisterSubscriptionPayment(RegisterSubscriptionPaymentRequest request)
+    {
+        await _meetingsModule.ExecuteCommandAsync(new MarkSubscriptionPaymentAsPaidCommand(request.PaymentId));
 
-        [HttpPost]
-        [HasPermission(PaymentsPermissions.RegisterPayment)]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> RegisterSubscriptionPayment(RegisterSubscriptionPaymentRequest request)
-        {
-            await _meetingsModule.ExecuteCommandAsync(new MarkSubscriptionPaymentAsPaidCommand(request.PaymentId));
-
-            return Ok();
-        }
+        return Ok();
     }
 }

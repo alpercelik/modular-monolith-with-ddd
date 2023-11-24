@@ -6,62 +6,46 @@ using CompanyName.MyMeetings.Modules.UserAccess.Domain.Users.Events;
 using NSubstitute;
 using NUnit.Framework;
 
-namespace CompanyName.MyMeetings.Modules.UserAccess.Domain.UnitTests.UserRegistrations
+namespace CompanyName.MyMeetings.Modules.UserAccess.Domain.UnitTests.UserRegistrations;
+
+[TestFixture]
+public class UserRegistrationTests : TestBase
 {
-    [TestFixture]
-    public class UserRegistrationTests : TestBase
+    [Test]
+    public void NewUserRegistration_WithUniqueLogin_IsSuccessful()
     {
-        [Test]
-        public void NewUserRegistration_WithUniqueLogin_IsSuccessful()
-        {
-            // Arrange
-            var usersCounter = Substitute.For<IUsersCounter>();
+        // Arrange
+        var usersCounter = Substitute.For<IUsersCounter>();
 
+        // Act
+        var userRegistration =
+            UserRegistration.RegisterNewUser(
+                "login",
+                "password",
+                "test@email",
+                "firstName",
+                "lastName",
+                usersCounter,
+                "confirmLink");
+
+        // Assert
+        var newUserRegisteredDomainEvent =
+            AssertPublishedDomainEvent<NewUserRegisteredDomainEvent>(userRegistration);
+        Assert.That(newUserRegisteredDomainEvent.UserRegistrationId, Is.EqualTo(userRegistration.Id));
+    }
+
+    [Test]
+    public void NewUserRegistration_WithoutUniqueLogin_BreaksUserLoginMustBeUniqueRule()
+    {
+        // Arrange
+        var usersCounter = Substitute.For<IUsersCounter>();
+        usersCounter.CountUsersWithLogin("login").Returns(x => 1);
+
+        // Assert
+        AssertBrokenRule<UserLoginMustBeUniqueRule>(() =>
+        {
             // Act
-            var userRegistration =
-                UserRegistration.RegisterNewUser(
-                    "login",
-                    "password",
-                    "test@email",
-                    "firstName",
-                    "lastName",
-                    usersCounter,
-                    "confirmLink");
-
-            // Assert
-            var newUserRegisteredDomainEvent =
-                AssertPublishedDomainEvent<NewUserRegisteredDomainEvent>(userRegistration);
-            Assert.That(newUserRegisteredDomainEvent.UserRegistrationId, Is.EqualTo(userRegistration.Id));
-        }
-
-        [Test]
-        public void NewUserRegistration_WithoutUniqueLogin_BreaksUserLoginMustBeUniqueRule()
-        {
-            // Arrange
-            var usersCounter = Substitute.For<IUsersCounter>();
-            usersCounter.CountUsersWithLogin("login").Returns(x => 1);
-
-            // Assert
-            AssertBrokenRule<UserLoginMustBeUniqueRule>(() =>
-            {
-                // Act
-                UserRegistration.RegisterNewUser(
-                    "login",
-                    "password",
-                    "test@email",
-                    "firstName",
-                    "lastName",
-                    usersCounter,
-                    "confirmLink");
-            });
-        }
-
-        [Test]
-        public void ConfirmingUserRegistration_WhenWaitingForConfirmation_IsSuccessful()
-        {
-            var usersCounter = Substitute.For<IUsersCounter>();
-
-            var registration = UserRegistration.RegisterNewUser(
+            UserRegistration.RegisterNewUser(
                 "login",
                 "password",
                 "test@email",
@@ -69,133 +53,148 @@ namespace CompanyName.MyMeetings.Modules.UserAccess.Domain.UnitTests.UserRegistr
                 "lastName",
                 usersCounter,
                 "confirmLink");
+        });
+    }
 
-            registration.Confirm();
+    [Test]
+    public void ConfirmingUserRegistration_WhenWaitingForConfirmation_IsSuccessful()
+    {
+        var usersCounter = Substitute.For<IUsersCounter>();
 
-            var userRegistrationConfirmedDomainEvent =
-                AssertPublishedDomainEvent<UserRegistrationConfirmedDomainEvent>(registration);
+        var registration = UserRegistration.RegisterNewUser(
+            "login",
+            "password",
+            "test@email",
+            "firstName",
+            "lastName",
+            usersCounter,
+            "confirmLink");
 
-            Assert.That(userRegistrationConfirmedDomainEvent.UserRegistrationId, Is.EqualTo(registration.Id));
-        }
+        registration.Confirm();
 
-        [Test]
-        public void UserRegistration_WhenIsConfirmed_CannotBeConfirmedAgain()
-        {
-            var usersCounter = Substitute.For<IUsersCounter>();
+        var userRegistrationConfirmedDomainEvent =
+            AssertPublishedDomainEvent<UserRegistrationConfirmedDomainEvent>(registration);
 
-            var registration = UserRegistration.RegisterNewUser(
-                "login",
-                "password",
-                "test@email",
-                "firstName",
-                "lastName",
-                usersCounter,
-                "confirmLink");
+        Assert.That(userRegistrationConfirmedDomainEvent.UserRegistrationId, Is.EqualTo(registration.Id));
+    }
 
-            registration.Confirm();
+    [Test]
+    public void UserRegistration_WhenIsConfirmed_CannotBeConfirmedAgain()
+    {
+        var usersCounter = Substitute.For<IUsersCounter>();
 
-            AssertBrokenRule<UserRegistrationCannotBeConfirmedMoreThanOnceRule>(() => { registration.Confirm(); });
-        }
+        var registration = UserRegistration.RegisterNewUser(
+            "login",
+            "password",
+            "test@email",
+            "firstName",
+            "lastName",
+            usersCounter,
+            "confirmLink");
 
-        [Test]
-        public void UserRegistration_WhenIsExpired_CannotBeConfirmed()
-        {
-            var usersCounter = Substitute.For<IUsersCounter>();
+        registration.Confirm();
 
-            var registration = UserRegistration.RegisterNewUser(
-                "login",
-                "password",
-                "test@email",
-                "firstName",
-                "lastName",
-                usersCounter,
-                "confirmLink");
+        AssertBrokenRule<UserRegistrationCannotBeConfirmedMoreThanOnceRule>(() => { registration.Confirm(); });
+    }
 
-            registration.Expire();
+    [Test]
+    public void UserRegistration_WhenIsExpired_CannotBeConfirmed()
+    {
+        var usersCounter = Substitute.For<IUsersCounter>();
 
-            AssertBrokenRule<UserRegistrationCannotBeConfirmedAfterExpirationRule>(() => { registration.Confirm(); });
-        }
+        var registration = UserRegistration.RegisterNewUser(
+            "login",
+            "password",
+            "test@email",
+            "firstName",
+            "lastName",
+            usersCounter,
+            "confirmLink");
 
-        [Test]
-        public void ExpiringUserRegistration_WhenWaitingForConfirmation_IsSuccessful()
-        {
-            var usersCounter = Substitute.For<IUsersCounter>();
+        registration.Expire();
 
-            var registration = UserRegistration.RegisterNewUser(
-                "login",
-                "password",
-                "test@email",
-                "firstName",
-                "lastName",
-                usersCounter,
-                "confirmLink");
+        AssertBrokenRule<UserRegistrationCannotBeConfirmedAfterExpirationRule>(() => { registration.Confirm(); });
+    }
 
-            registration.Expire();
+    [Test]
+    public void ExpiringUserRegistration_WhenWaitingForConfirmation_IsSuccessful()
+    {
+        var usersCounter = Substitute.For<IUsersCounter>();
 
-            var userRegistrationExpired = AssertPublishedDomainEvent<UserRegistrationExpiredDomainEvent>(registration);
+        var registration = UserRegistration.RegisterNewUser(
+            "login",
+            "password",
+            "test@email",
+            "firstName",
+            "lastName",
+            usersCounter,
+            "confirmLink");
 
-            Assert.That(userRegistrationExpired.UserRegistrationId, Is.EqualTo(registration.Id));
-        }
+        registration.Expire();
 
-        [Test]
-        public void UserRegistration_WhenIsExpired_CannotBeExpiredAgain()
-        {
-            var usersCounter = Substitute.For<IUsersCounter>();
+        var userRegistrationExpired = AssertPublishedDomainEvent<UserRegistrationExpiredDomainEvent>(registration);
 
-            var registration = UserRegistration.RegisterNewUser(
-                "login",
-                "password",
-                "test@email",
-                "firstName",
-                "lastName",
-                usersCounter,
-                "confirmLink");
+        Assert.That(userRegistrationExpired.UserRegistrationId, Is.EqualTo(registration.Id));
+    }
 
-            registration.Expire();
+    [Test]
+    public void UserRegistration_WhenIsExpired_CannotBeExpiredAgain()
+    {
+        var usersCounter = Substitute.For<IUsersCounter>();
 
-            AssertBrokenRule<UserRegistrationCannotBeExpiredMoreThanOnceRule>(() => { registration.Expire(); });
-        }
+        var registration = UserRegistration.RegisterNewUser(
+            "login",
+            "password",
+            "test@email",
+            "firstName",
+            "lastName",
+            usersCounter,
+            "confirmLink");
 
-        [Test]
-        public void CreateUser_WhenRegistrationIsConfirmed_IsSuccessful()
-        {
-            var usersCounter = Substitute.For<IUsersCounter>();
+        registration.Expire();
 
-            var registration = UserRegistration.RegisterNewUser(
-                "login",
-                "password",
-                "test@email",
-                "firstName",
-                "lastName",
-                usersCounter,
-                "confirmLink");
+        AssertBrokenRule<UserRegistrationCannotBeExpiredMoreThanOnceRule>(() => { registration.Expire(); });
+    }
 
-            registration.Confirm();
+    [Test]
+    public void CreateUser_WhenRegistrationIsConfirmed_IsSuccessful()
+    {
+        var usersCounter = Substitute.For<IUsersCounter>();
 
-            var user = registration.CreateUser();
+        var registration = UserRegistration.RegisterNewUser(
+            "login",
+            "password",
+            "test@email",
+            "firstName",
+            "lastName",
+            usersCounter,
+            "confirmLink");
 
-            var userCreated = AssertPublishedDomainEvent<UserCreatedDomainEvent>(user);
+        registration.Confirm();
 
-            Assert.That(user.Id, Is.EqualTo(registration.Id));
-            Assert.That(userCreated.Id, Is.EqualTo(registration.Id));
-        }
+        var user = registration.CreateUser();
 
-        [Test]
-        public void UserCreation_WhenRegistrationIsNotConfirmed_IsNotPossible()
-        {
-            var usersCounter = Substitute.For<IUsersCounter>();
+        var userCreated = AssertPublishedDomainEvent<UserCreatedDomainEvent>(user);
 
-            var registration = UserRegistration.RegisterNewUser(
-                "login",
-                "password",
-                "test@email",
-                "firstName",
-                "lastName",
-                usersCounter,
-                "confirmLink");
+        Assert.That(user.Id, Is.EqualTo(registration.Id));
+        Assert.That(userCreated.Id, Is.EqualTo(registration.Id));
+    }
 
-            AssertBrokenRule<UserCannotBeCreatedWhenRegistrationIsNotConfirmedRule>(
-                () => { registration.CreateUser(); });
-        }
+    [Test]
+    public void UserCreation_WhenRegistrationIsNotConfirmed_IsNotPossible()
+    {
+        var usersCounter = Substitute.For<IUsersCounter>();
+
+        var registration = UserRegistration.RegisterNewUser(
+            "login",
+            "password",
+            "test@email",
+            "firstName",
+            "lastName",
+            usersCounter,
+            "confirmLink");
+
+        AssertBrokenRule<UserCannotBeCreatedWhenRegistrationIsNotConfirmedRule>(
+            () => { registration.CreateUser(); });
     }
 }

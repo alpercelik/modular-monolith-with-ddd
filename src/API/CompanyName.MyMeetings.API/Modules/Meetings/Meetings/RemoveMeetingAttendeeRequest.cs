@@ -1,7 +1,6 @@
-﻿namespace CompanyName.MyMeetings.API.Modules.Meetings.Meetings
+﻿namespace CompanyName.MyMeetings.API.Modules.Meetings.Meetings;
+
+public class RemoveMeetingAttendeeRequest
 {
-    public class RemoveMeetingAttendeeRequest
-    {
-        public string RemovingReason { get; set; }
-    }
+    public string RemovingReason { get; set; }
 }

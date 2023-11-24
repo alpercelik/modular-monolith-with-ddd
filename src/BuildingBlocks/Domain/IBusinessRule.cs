@@ -1,9 +1,8 @@
-﻿namespace CompanyName.MyMeetings.BuildingBlocks.Domain
-{
-    public interface IBusinessRule
-    {
-        bool IsBroken();
+﻿namespace CompanyName.MyMeetings.BuildingBlocks.Domain;
 
-        string Message { get; }
-    }
+public interface IBusinessRule
+{
+    bool IsBroken();
+
+    string Message { get; }
 }

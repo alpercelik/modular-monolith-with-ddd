@@ -8,48 +8,47 @@ using CompanyName.MyMeetings.Modules.Payments.Domain.SeedWork;
 using Dapper;
 using MediatR;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Application.Subscriptions.ExpireSubscriptions
+namespace CompanyName.MyMeetings.Modules.Payments.Application.Subscriptions.ExpireSubscriptions;
+
+internal class ExpireSubscriptionsCommandHandler : ICommandHandler<ExpireSubscriptionsCommand>
 {
-    internal class ExpireSubscriptionsCommandHandler : ICommandHandler<ExpireSubscriptionsCommand>
+    private readonly ISqlConnectionFactory _sqlConnectionFactory;
+
+    private readonly ICommandsScheduler _commandsScheduler;
+
+    public ExpireSubscriptionsCommandHandler(
+        ISqlConnectionFactory sqlConnectionFactory,
+        ICommandsScheduler commandsScheduler)
     {
-        private readonly ISqlConnectionFactory _sqlConnectionFactory;
+        _sqlConnectionFactory = sqlConnectionFactory;
+        _commandsScheduler = commandsScheduler;
+    }
 
-        private readonly ICommandsScheduler _commandsScheduler;
+    public async Task<Unit> Handle(ExpireSubscriptionsCommand request, CancellationToken cancellationToken)
+    {
+        const string sql = "SELECT " +
+                           "[SubscriptionDetails].Id " +
+                           "FROM [payments].[SubscriptionDetails] AS [SubscriptionDetails] " +
+                           "WHERE [SubscriptionDetails].ExpirationDate < @Date";
 
-        public ExpireSubscriptionsCommandHandler(
-            ISqlConnectionFactory sqlConnectionFactory,
-            ICommandsScheduler commandsScheduler)
-        {
-            _sqlConnectionFactory = sqlConnectionFactory;
-            _commandsScheduler = commandsScheduler;
-        }
+        var connection = _sqlConnectionFactory.GetOpenConnection();
 
-        public async Task<Unit> Handle(ExpireSubscriptionsCommand request, CancellationToken cancellationToken)
-        {
-            const string sql = "SELECT " +
-                               "[SubscriptionDetails].Id " +
-                               "FROM [payments].[SubscriptionDetails] AS [SubscriptionDetails] " +
-                               "WHERE [SubscriptionDetails].ExpirationDate < @Date";
-
-            var connection = _sqlConnectionFactory.GetOpenConnection();
-
-            var expiredSubscriptionsIds =
-                await connection.QueryAsync<Guid>(sql, new
-                {
-                    Date = SystemClock.Now
-                });
-
-            var expiredSubscriptionsIdsList = expiredSubscriptionsIds.AsList();
-
-            foreach (var subscriptionId in expiredSubscriptionsIdsList)
+        var expiredSubscriptionsIds =
+            await connection.QueryAsync<Guid>(sql, new
             {
-                await _commandsScheduler.EnqueueAsync(
-                    new ExpireSubscriptionCommand(
-                        Guid.NewGuid(),
-                        subscriptionId));
-            }
+                Date = SystemClock.Now
+            });
 
-            return Unit.Value;
+        var expiredSubscriptionsIdsList = expiredSubscriptionsIds.AsList();
+
+        foreach (var subscriptionId in expiredSubscriptionsIdsList)
+        {
+            await _commandsScheduler.EnqueueAsync(
+                new ExpireSubscriptionCommand(
+                    Guid.NewGuid(),
+                    subscriptionId));
         }
+
+        return Unit.Value;
     }
 }

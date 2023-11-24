@@ -1,12 +1,11 @@
-﻿namespace CompanyName.MyMeetings.BuildingBlocks.Infrastructure.Emails
-{
-    public class EmailsConfiguration
-    {
-        public EmailsConfiguration(string fromEmail)
-        {
-            FromEmail = fromEmail;
-        }
+﻿namespace CompanyName.MyMeetings.BuildingBlocks.Infrastructure.Emails;
 
-        public string FromEmail { get; }
+public class EmailsConfiguration
+{
+    public EmailsConfiguration(string fromEmail)
+    {
+        FromEmail = fromEmail;
     }
+
+    public string FromEmail { get; }
 }

@@ -7,32 +7,31 @@ using CompanyName.MyMeetings.Modules.Meetings.Domain.MeetingGroups;
 using CompanyName.MyMeetings.Modules.Meetings.Domain.Members;
 using MediatR;
 
-namespace CompanyName.MyMeetings.Modules.Meetings.Application.MeetingGroupProposals.ProposeMeetingGroup
+namespace CompanyName.MyMeetings.Modules.Meetings.Application.MeetingGroupProposals.ProposeMeetingGroup;
+
+internal class ProposeMeetingGroupCommandHandler : ICommandHandler<ProposeMeetingGroupCommand, Guid>
 {
-    internal class ProposeMeetingGroupCommandHandler : ICommandHandler<ProposeMeetingGroupCommand, Guid>
+    private readonly IMeetingGroupProposalRepository _meetingGroupProposalRepository;
+    private readonly IMemberContext _memberContext;
+
+    internal ProposeMeetingGroupCommandHandler(
+        IMeetingGroupProposalRepository meetingGroupProposalRepository,
+        IMemberContext memberContext)
     {
-        private readonly IMeetingGroupProposalRepository _meetingGroupProposalRepository;
-        private readonly IMemberContext _memberContext;
+        _meetingGroupProposalRepository = meetingGroupProposalRepository;
+        _memberContext = memberContext;
+    }
 
-        internal ProposeMeetingGroupCommandHandler(
-            IMeetingGroupProposalRepository meetingGroupProposalRepository,
-            IMemberContext memberContext)
-        {
-            _meetingGroupProposalRepository = meetingGroupProposalRepository;
-            _memberContext = memberContext;
-        }
+    public async Task<Guid> Handle(ProposeMeetingGroupCommand request, CancellationToken cancellationToken)
+    {
+        var meetingGroupProposal = MeetingGroupProposal.ProposeNew(
+            request.Name,
+            request.Description,
+            MeetingGroupLocation.CreateNew(request.LocationCity, request.LocationCountryCode),
+            _memberContext.MemberId);
 
-        public async Task<Guid> Handle(ProposeMeetingGroupCommand request, CancellationToken cancellationToken)
-        {
-            var meetingGroupProposal = MeetingGroupProposal.ProposeNew(
-                request.Name,
-                request.Description,
-                MeetingGroupLocation.CreateNew(request.LocationCity, request.LocationCountryCode),
-                _memberContext.MemberId);
+        await _meetingGroupProposalRepository.AddAsync(meetingGroupProposal);
 
-            await _meetingGroupProposalRepository.AddAsync(meetingGroupProposal);
-
-            return meetingGroupProposal.Id.Value;
-        }
+        return meetingGroupProposal.Id.Value;
     }
 }

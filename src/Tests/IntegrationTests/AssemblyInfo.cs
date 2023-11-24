@@ -3,9 +3,8 @@
 [assembly: NonParallelizable]
 [assembly: LevelOfParallelism(1)]
 
-namespace CompanyName.MyMeetings.IntegrationTests
+namespace CompanyName.MyMeetings.IntegrationTests;
+
+public class AssemblyInfo
 {
-    public class AssemblyInfo
-    {
-    }
 }

@@ -4,35 +4,34 @@ using CompanyName.MyMeetings.Modules.UserAccess.Application.Contracts;
 using IdentityServer4.Models;
 using IdentityServer4.Validation;
 
-namespace CompanyName.MyMeetings.API.Modules.UserAccess
+namespace CompanyName.MyMeetings.API.Modules.UserAccess;
+
+public class ResourceOwnerPasswordValidator : IResourceOwnerPasswordValidator
 {
-    public class ResourceOwnerPasswordValidator : IResourceOwnerPasswordValidator
+    private readonly IUserAccessModule _userAccessModule;
+
+    public ResourceOwnerPasswordValidator(IUserAccessModule userAccessModule)
     {
-        private readonly IUserAccessModule _userAccessModule;
+        _userAccessModule = userAccessModule;
+    }
 
-        public ResourceOwnerPasswordValidator(IUserAccessModule userAccessModule)
+    public async Task ValidateAsync(ResourceOwnerPasswordValidationContext context)
+    {
+        var authenticationResult = await _userAccessModule.ExecuteCommandAsync(
+            new AuthenticateCommand(context.UserName, context.Password));
+
+        if (!authenticationResult.IsAuthenticated)
         {
-            _userAccessModule = userAccessModule;
-        }
-
-        public async Task ValidateAsync(ResourceOwnerPasswordValidationContext context)
-        {
-            var authenticationResult = await _userAccessModule.ExecuteCommandAsync(
-                new AuthenticateCommand(context.UserName, context.Password));
-
-            if (!authenticationResult.IsAuthenticated)
-            {
-                context.Result = new GrantValidationResult(
-                    TokenRequestErrors.InvalidGrant,
-                    authenticationResult.AuthenticationError);
-
-                return;
-            }
-
             context.Result = new GrantValidationResult(
-                authenticationResult.User.Id.ToString(),
-                "forms",
-                authenticationResult.User.Claims);
+                TokenRequestErrors.InvalidGrant,
+                authenticationResult.AuthenticationError);
+
+            return;
         }
+
+        context.Result = new GrantValidationResult(
+            authenticationResult.User.Id.ToString(),
+            "forms",
+            authenticationResult.User.Claims);
     }
 }

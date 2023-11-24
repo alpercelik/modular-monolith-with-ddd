@@ -1,22 +1,21 @@
 ﻿using System.Threading.Tasks;
 
-namespace CompanyName.MyMeetings.SUT.SeedWork.Probing
+namespace CompanyName.MyMeetings.SUT.SeedWork.Probing;
+
+public interface IProbe
 {
-    public interface IProbe
-    {
-        bool IsSatisfied();
+    bool IsSatisfied();
 
-        Task SampleAsync();
+    Task SampleAsync();
 
-        string DescribeFailureTo();
-    }
+    string DescribeFailureTo();
+}
 
-    public interface IProbe<T>
-    {
-        bool IsSatisfied(T sample);
+public interface IProbe<T>
+{
+    bool IsSatisfied(T sample);
 
-        Task<T> GetSampleAsync();
+    Task<T> GetSampleAsync();
 
-        string DescribeFailureTo();
-    }
+    string DescribeFailureTo();
 }

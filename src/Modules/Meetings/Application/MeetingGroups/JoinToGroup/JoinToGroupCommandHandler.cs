@@ -5,28 +5,27 @@ using CompanyName.MyMeetings.Modules.Meetings.Domain.MeetingGroups;
 using CompanyName.MyMeetings.Modules.Meetings.Domain.Members;
 using MediatR;
 
-namespace CompanyName.MyMeetings.Modules.Meetings.Application.MeetingGroups.JoinToGroup
+namespace CompanyName.MyMeetings.Modules.Meetings.Application.MeetingGroups.JoinToGroup;
+
+internal class JoinToGroupCommandHandler : ICommandHandler<JoinToGroupCommand>
 {
-    internal class JoinToGroupCommandHandler : ICommandHandler<JoinToGroupCommand>
+    private readonly IMeetingGroupRepository _meetingGroupRepository;
+    private readonly IMemberContext _memberContext;
+
+    internal JoinToGroupCommandHandler(
+        IMeetingGroupRepository meetingGroupRepository,
+        IMemberContext memberContext)
     {
-        private readonly IMeetingGroupRepository _meetingGroupRepository;
-        private readonly IMemberContext _memberContext;
+        _meetingGroupRepository = meetingGroupRepository;
+        _memberContext = memberContext;
+    }
 
-        internal JoinToGroupCommandHandler(
-            IMeetingGroupRepository meetingGroupRepository,
-            IMemberContext memberContext)
-        {
-            _meetingGroupRepository = meetingGroupRepository;
-            _memberContext = memberContext;
-        }
+    public async Task<Unit> Handle(JoinToGroupCommand request, CancellationToken cancellationToken)
+    {
+        var meetingGroup = await _meetingGroupRepository.GetByIdAsync(new MeetingGroupId(request.MeetingGroupId));
 
-        public async Task<Unit> Handle(JoinToGroupCommand request, CancellationToken cancellationToken)
-        {
-            var meetingGroup = await _meetingGroupRepository.GetByIdAsync(new MeetingGroupId(request.MeetingGroupId));
+        meetingGroup.JoinToGroupMember(_memberContext.MemberId);
 
-            meetingGroup.JoinToGroupMember(_memberContext.MemberId);
-
-            return Unit.Value;
-        }
+        return Unit.Value;
     }
 }

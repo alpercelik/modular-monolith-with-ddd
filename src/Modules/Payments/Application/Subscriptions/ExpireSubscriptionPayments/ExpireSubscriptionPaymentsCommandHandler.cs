@@ -10,51 +10,50 @@ using CompanyName.MyMeetings.Modules.Payments.Domain.SubscriptionPayments;
 using Dapper;
 using MediatR;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Application.Subscriptions.ExpireSubscriptions
+namespace CompanyName.MyMeetings.Modules.Payments.Application.Subscriptions.ExpireSubscriptions;
+
+internal class ExpireSubscriptionPaymentsCommandHandler : ICommandHandler<ExpireSubscriptionPaymentsCommand>
 {
-    internal class ExpireSubscriptionPaymentsCommandHandler : ICommandHandler<ExpireSubscriptionPaymentsCommand>
+    private readonly ISqlConnectionFactory _sqlConnectionFactory;
+
+    private readonly ICommandsScheduler _commandsScheduler;
+
+    public ExpireSubscriptionPaymentsCommandHandler(
+        ISqlConnectionFactory sqlConnectionFactory,
+        ICommandsScheduler commandsScheduler)
     {
-        private readonly ISqlConnectionFactory _sqlConnectionFactory;
+        _sqlConnectionFactory = sqlConnectionFactory;
+        _commandsScheduler = commandsScheduler;
+    }
 
-        private readonly ICommandsScheduler _commandsScheduler;
+    public async Task<Unit> Handle(ExpireSubscriptionPaymentsCommand request, CancellationToken cancellationToken)
+    {
+        const string sql = "SELECT " +
+                           "[SubscriptionPayment].PaymentId " +
+                           "FROM [payments].[SubscriptionPayments] AS [SubscriptionPayment] " +
+                           "WHERE [SubscriptionPayment].Date > @Date AND " +
+                           "[SubscriptionPayment].[Status] = @Status";
 
-        public ExpireSubscriptionPaymentsCommandHandler(
-            ISqlConnectionFactory sqlConnectionFactory,
-            ICommandsScheduler commandsScheduler)
-        {
-            _sqlConnectionFactory = sqlConnectionFactory;
-            _commandsScheduler = commandsScheduler;
-        }
+        var connection = _sqlConnectionFactory.GetOpenConnection();
 
-        public async Task<Unit> Handle(ExpireSubscriptionPaymentsCommand request, CancellationToken cancellationToken)
-        {
-            const string sql = "SELECT " +
-                               "[SubscriptionPayment].PaymentId " +
-                               "FROM [payments].[SubscriptionPayments] AS [SubscriptionPayment] " +
-                               "WHERE [SubscriptionPayment].Date > @Date AND " +
-                               "[SubscriptionPayment].[Status] = @Status";
+        var timeForPayment = TimeSpan.FromMinutes(20);
+        var date = SystemClock.Now.Add(timeForPayment);
 
-            var connection = _sqlConnectionFactory.GetOpenConnection();
-
-            var timeForPayment = TimeSpan.FromMinutes(20);
-            var date = SystemClock.Now.Add(timeForPayment);
-
-            var expiredSubscriptionPaymentsIds =
-                await connection.QueryAsync<Guid>(sql, new
-                {
-                    Date = date,
-                    Status = SubscriptionPaymentStatus.WaitingForPayment.Code
-                });
-
-            var expiredSubscriptionsPaymentsIdsList = expiredSubscriptionPaymentsIds.AsList();
-
-            foreach (var subscriptionPaymentId in expiredSubscriptionsPaymentsIdsList)
+        var expiredSubscriptionPaymentsIds =
+            await connection.QueryAsync<Guid>(sql, new
             {
-                await _commandsScheduler.EnqueueAsync(
-                    new ExpireSubscriptionPaymentCommand(subscriptionPaymentId));
-            }
+                Date = date,
+                Status = SubscriptionPaymentStatus.WaitingForPayment.Code
+            });
 
-            return Unit.Value;
+        var expiredSubscriptionsPaymentsIdsList = expiredSubscriptionPaymentsIds.AsList();
+
+        foreach (var subscriptionPaymentId in expiredSubscriptionsPaymentsIdsList)
+        {
+            await _commandsScheduler.EnqueueAsync(
+                new ExpireSubscriptionPaymentCommand(subscriptionPaymentId));
         }
+
+        return Unit.Value;
     }
 }

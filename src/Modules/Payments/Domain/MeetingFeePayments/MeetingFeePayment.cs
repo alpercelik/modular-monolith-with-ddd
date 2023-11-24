@@ -4,77 +4,76 @@ using CompanyName.MyMeetings.Modules.Payments.Domain.MeetingFeePayments.Events;
 using CompanyName.MyMeetings.Modules.Payments.Domain.MeetingFees;
 using CompanyName.MyMeetings.Modules.Payments.Domain.SeedWork;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Domain.MeetingFeePayments
+namespace CompanyName.MyMeetings.Modules.Payments.Domain.MeetingFeePayments;
+
+public class MeetingFeePayment : AggregateRoot
 {
-    public class MeetingFeePayment : AggregateRoot
+    private MeetingFeeId _meetingFeeId;
+
+    private MeetingFeePaymentStatus _status;
+
+    public static MeetingFeePayment Create(
+        MeetingFeeId meetingFeeId)
     {
-        private MeetingFeeId _meetingFeeId;
+        var meetingFeePayment = new MeetingFeePayment();
 
-        private MeetingFeePaymentStatus _status;
+        var meetingFeePaymentCreated = new MeetingFeePaymentCreatedDomainEvent(
+            Guid.NewGuid(),
+            meetingFeeId.Value,
+            MeetingFeePaymentStatus.WaitingForPayment.Code);
 
-        public static MeetingFeePayment Create(
-            MeetingFeeId meetingFeeId)
-        {
-            var meetingFeePayment = new MeetingFeePayment();
+        meetingFeePayment.Apply(meetingFeePaymentCreated);
+        meetingFeePayment.AddDomainEvent(meetingFeePaymentCreated);
 
-            var meetingFeePaymentCreated = new MeetingFeePaymentCreatedDomainEvent(
-                Guid.NewGuid(),
-                meetingFeeId.Value,
-                MeetingFeePaymentStatus.WaitingForPayment.Code);
+        return meetingFeePayment;
+    }
 
-            meetingFeePayment.Apply(meetingFeePaymentCreated);
-            meetingFeePayment.AddDomainEvent(meetingFeePaymentCreated);
+    public void Expire()
+    {
+        MeetingFeePaymentPaidDomainEvent @event =
+            new MeetingFeePaymentPaidDomainEvent(
+                this.Id,
+                MeetingFeePaymentStatus.Expired.Code);
 
-            return meetingFeePayment;
-        }
+        this.Apply(@event);
+        this.AddDomainEvent(@event);
+    }
 
-        public void Expire()
-        {
-            MeetingFeePaymentPaidDomainEvent @event =
-                new MeetingFeePaymentPaidDomainEvent(
-                    this.Id,
-                    MeetingFeePaymentStatus.Expired.Code);
+    public void MarkAsPaid()
+    {
+        MeetingFeePaymentPaidDomainEvent @event =
+            new MeetingFeePaymentPaidDomainEvent(
+                this.Id,
+                MeetingFeePaymentStatus.Paid.Code);
 
-            this.Apply(@event);
-            this.AddDomainEvent(@event);
-        }
+        this.Apply(@event);
+        this.AddDomainEvent(@event);
+    }
 
-        public void MarkAsPaid()
-        {
-            MeetingFeePaymentPaidDomainEvent @event =
-                new MeetingFeePaymentPaidDomainEvent(
-                    this.Id,
-                    MeetingFeePaymentStatus.Paid.Code);
+    public MeetingFeePaymentSnapshot GetSnapshot()
+    {
+        return new MeetingFeePaymentSnapshot(this.Id, _meetingFeeId.Value);
+    }
 
-            this.Apply(@event);
-            this.AddDomainEvent(@event);
-        }
+    protected override void Apply(IDomainEvent @event)
+    {
+        this.When((dynamic)@event);
+    }
 
-        public MeetingFeePaymentSnapshot GetSnapshot()
-        {
-            return new MeetingFeePaymentSnapshot(this.Id, _meetingFeeId.Value);
-        }
+    private void When(MeetingFeePaymentCreatedDomainEvent @event)
+    {
+        this.Id = @event.MeetingFeePaymentId;
+        _meetingFeeId = new MeetingFeeId(@event.MeetingFeeId);
+        _status = MeetingFeePaymentStatus.Of(@event.Status);
+    }
 
-        protected override void Apply(IDomainEvent @event)
-        {
-            this.When((dynamic)@event);
-        }
+    private void When(MeetingFeePaymentExpiredDomainEvent @event)
+    {
+        _status = MeetingFeePaymentStatus.Of(@event.Status);
+    }
 
-        private void When(MeetingFeePaymentCreatedDomainEvent @event)
-        {
-            this.Id = @event.MeetingFeePaymentId;
-            _meetingFeeId = new MeetingFeeId(@event.MeetingFeeId);
-            _status = MeetingFeePaymentStatus.Of(@event.Status);
-        }
-
-        private void When(MeetingFeePaymentExpiredDomainEvent @event)
-        {
-            _status = MeetingFeePaymentStatus.Of(@event.Status);
-        }
-
-        private void When(MeetingFeePaymentPaidDomainEvent @event)
-        {
-            _status = MeetingFeePaymentStatus.Of(@event.Status);
-        }
+    private void When(MeetingFeePaymentPaidDomainEvent @event)
+    {
+        _status = MeetingFeePaymentStatus.Of(@event.Status);
     }
 }

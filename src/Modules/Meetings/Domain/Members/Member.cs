@@ -5,45 +5,44 @@ using CompanyName.MyMeetings.Modules.Meetings.Domain.Meetings;
 using CompanyName.MyMeetings.Modules.Meetings.Domain.Members.Events;
 using CompanyName.MyMeetings.Modules.Meetings.Domain.SharedKernel;
 
-namespace CompanyName.MyMeetings.Modules.Meetings.Domain.Members
+namespace CompanyName.MyMeetings.Modules.Meetings.Domain.Members;
+
+public class Member : Entity, IAggregateRoot
 {
-    public class Member : Entity, IAggregateRoot
+    public MemberId Id { get; private set; }
+
+    private string _login;
+
+    private string _email;
+
+    private string _firstName;
+
+    private string _lastName;
+
+    private string _name;
+
+    private DateTime _createDate;
+
+    private Member()
     {
-        public MemberId Id { get; private set; }
+        // Only for EF.
+    }
 
-        private string _login;
+    public static Member Create(Guid id, string login, string email, string firstName, string lastName, string name)
+    {
+        return new Member(id, login, email, firstName, lastName, name);
+    }
 
-        private string _email;
+    private Member(Guid id, string login, string email, string firstName, string lastName, string name)
+    {
+        this.Id = new MemberId(id);
+        _login = login;
+        _email = email;
+        _firstName = firstName;
+        _lastName = lastName;
+        _name = name;
+        _createDate = SystemClock.Now;
 
-        private string _firstName;
-
-        private string _lastName;
-
-        private string _name;
-
-        private DateTime _createDate;
-
-        private Member()
-        {
-            // Only for EF.
-        }
-
-        public static Member Create(Guid id, string login, string email, string firstName, string lastName, string name)
-        {
-            return new Member(id, login, email, firstName, lastName, name);
-        }
-
-        private Member(Guid id, string login, string email, string firstName, string lastName, string name)
-        {
-            this.Id = new MemberId(id);
-            _login = login;
-            _email = email;
-            _firstName = firstName;
-            _lastName = lastName;
-            _name = name;
-            _createDate = SystemClock.Now;
-
-            this.AddDomainEvent(new MemberCreatedDomainEvent(this.Id));
-        }
+        this.AddDomainEvent(new MemberCreatedDomainEvent(this.Id));
     }
 }

@@ -10,67 +10,66 @@ using CompanyName.MyMeetings.BuildingBlocks.Infrastructure.DomainEventsDispatchi
 using CompanyName.MyMeetings.Modules.Payments.Domain.SeedWork;
 using Dapper;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Infrastructure.Configuration.Processing
+namespace CompanyName.MyMeetings.Modules.Payments.Infrastructure.Configuration.Processing;
+
+public class PaymentsUnitOfWork : IUnitOfWork
 {
-    public class PaymentsUnitOfWork : IUnitOfWork
+    private readonly IOutbox _outbox;
+
+    private readonly IAggregateStore _aggregateStore;
+
+    private readonly IDomainEventsDispatcher _domainEventsDispatcher;
+
+    private readonly ISqlConnectionFactory _sqlConnectionFactory;
+
+    public PaymentsUnitOfWork(
+        IOutbox outbox,
+        IAggregateStore aggregateStore,
+        IDomainEventsDispatcher domainEventsDispatcher,
+        ISqlConnectionFactory sqlConnectionFactory)
     {
-        private readonly IOutbox _outbox;
+        _outbox = outbox;
+        _aggregateStore = aggregateStore;
+        _domainEventsDispatcher = domainEventsDispatcher;
+        _sqlConnectionFactory = sqlConnectionFactory;
+    }
 
-        private readonly IAggregateStore _aggregateStore;
+    public async Task<int> CommitAsync(
+        CancellationToken cancellationToken = default,
+        Guid? internalCommandId = null)
+    {
+        await _domainEventsDispatcher.DispatchEventsAsync();
 
-        private readonly IDomainEventsDispatcher _domainEventsDispatcher;
-
-        private readonly ISqlConnectionFactory _sqlConnectionFactory;
-
-        public PaymentsUnitOfWork(
-            IOutbox outbox,
-            IAggregateStore aggregateStore,
-            IDomainEventsDispatcher domainEventsDispatcher,
-            ISqlConnectionFactory sqlConnectionFactory)
+        var options = new TransactionOptions
         {
-            _outbox = outbox;
-            _aggregateStore = aggregateStore;
-            _domainEventsDispatcher = domainEventsDispatcher;
-            _sqlConnectionFactory = sqlConnectionFactory;
+            IsolationLevel = IsolationLevel.ReadCommitted
+        };
+
+        using var transaction = new TransactionScope(
+            TransactionScopeOption.Required,
+            options,
+            TransactionScopeAsyncFlowOption.Enabled);
+
+        await _aggregateStore.Save();
+
+        await _outbox.Save();
+
+        if (internalCommandId.HasValue)
+        {
+            using var connection = _sqlConnectionFactory.CreateNewConnection();
+            await connection.ExecuteScalarAsync(
+                "UPDATE payments.InternalCommands " +
+                "SET ProcessedDate = @Date " +
+                "WHERE Id = @Id",
+                new
+                {
+                    Date = DateTime.UtcNow,
+                    Id = internalCommandId.Value
+                });
         }
 
-        public async Task<int> CommitAsync(
-            CancellationToken cancellationToken = default,
-            Guid? internalCommandId = null)
-        {
-            await _domainEventsDispatcher.DispatchEventsAsync();
+        transaction.Complete();
 
-            var options = new TransactionOptions
-            {
-                IsolationLevel = IsolationLevel.ReadCommitted
-            };
-
-            using var transaction = new TransactionScope(
-                TransactionScopeOption.Required,
-                options,
-                TransactionScopeAsyncFlowOption.Enabled);
-
-            await _aggregateStore.Save();
-
-            await _outbox.Save();
-
-            if (internalCommandId.HasValue)
-            {
-                using var connection = _sqlConnectionFactory.CreateNewConnection();
-                await connection.ExecuteScalarAsync(
-                    "UPDATE payments.InternalCommands " +
-                    "SET ProcessedDate = @Date " +
-                    "WHERE Id = @Id",
-                    new
-                    {
-                        Date = DateTime.UtcNow,
-                        Id = internalCommandId.Value
-                    });
-            }
-
-            transaction.Complete();
-
-            return 0;
-        }
+        return 0;
     }
 }

@@ -1,13 +1,12 @@
 ﻿using System;
 using CompanyName.MyMeetings.Modules.Payments.Domain.SeedWork;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Domain.MeetingFeePayments
+namespace CompanyName.MyMeetings.Modules.Payments.Domain.MeetingFeePayments;
+
+public class MeetingFeePaymentId : AggregateId<MeetingFeePayment>
 {
-    public class MeetingFeePaymentId : AggregateId<MeetingFeePayment>
+    public MeetingFeePaymentId(Guid value)
+        : base(value)
     {
-        public MeetingFeePaymentId(Guid value)
-            : base(value)
-        {
-        }
     }
 }

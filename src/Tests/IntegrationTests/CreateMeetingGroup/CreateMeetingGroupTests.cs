@@ -13,110 +13,109 @@ using CompanyName.MyMeetings.Modules.Meetings.Application.MeetingGroupProposals.
 using CompanyName.MyMeetings.Modules.Meetings.Application.MeetingGroups.GetAllMeetingGroups;
 using NUnit.Framework;
 
-namespace CompanyName.MyMeetings.IntegrationTests.CreateMeetingGroup
+namespace CompanyName.MyMeetings.IntegrationTests.CreateMeetingGroup;
+
+public class CreateMeetingGroupTests : TestBase
 {
-    public class CreateMeetingGroupTests : TestBase
+    [Test]
+    public async Task CreateMeetingGroupScenario_WhenProposalIsAccepted()
     {
-        [Test]
-        public async Task CreateMeetingGroupScenario_WhenProposalIsAccepted()
+        var meetingGroupId = await MeetingsModule.ExecuteCommandAsync(
+            new ProposeMeetingGroupCommand(
+                "Name",
+                "Description",
+                "Location",
+                "PL"));
+
+        await AssertEventually(
+            new GetMeetingGroupProposalFromAdministrationProbe(meetingGroupId, AdministrationModule),
+            10000);
+
+        await AdministrationModule.ExecuteCommandAsync(new AcceptMeetingGroupProposalCommand(meetingGroupId));
+
+        await AssertEventually(
+            new GetCreatedMeetingGroupFromMeetingsProbe(meetingGroupId, MeetingsModule),
+            15000);
+    }
+
+    private class GetCreatedMeetingGroupFromMeetingsProbe : IProbe
+    {
+        private readonly Guid _expectedMeetingGroupId;
+
+        private readonly IMeetingsModule _meetingsModule;
+
+        private List<MeetingGroupDto> _allMeetingGroups;
+
+        public GetCreatedMeetingGroupFromMeetingsProbe(
+            Guid expectedMeetingGroupId,
+            IMeetingsModule meetingsModule)
         {
-            var meetingGroupId = await MeetingsModule.ExecuteCommandAsync(
-                new ProposeMeetingGroupCommand(
-                    "Name",
-                    "Description",
-                    "Location",
-                    "PL"));
-
-            await AssertEventually(
-                new GetMeetingGroupProposalFromAdministrationProbe(meetingGroupId, AdministrationModule),
-                10000);
-
-            await AdministrationModule.ExecuteCommandAsync(new AcceptMeetingGroupProposalCommand(meetingGroupId));
-
-            await AssertEventually(
-                new GetCreatedMeetingGroupFromMeetingsProbe(meetingGroupId, MeetingsModule),
-                15000);
+            _expectedMeetingGroupId = expectedMeetingGroupId;
+            _meetingsModule = meetingsModule;
         }
 
-        private class GetCreatedMeetingGroupFromMeetingsProbe : IProbe
+        public bool IsSatisfied()
         {
-            private readonly Guid _expectedMeetingGroupId;
-
-            private readonly IMeetingsModule _meetingsModule;
-
-            private List<MeetingGroupDto> _allMeetingGroups;
-
-            public GetCreatedMeetingGroupFromMeetingsProbe(
-                Guid expectedMeetingGroupId,
-                IMeetingsModule meetingsModule)
-            {
-                _expectedMeetingGroupId = expectedMeetingGroupId;
-                _meetingsModule = meetingsModule;
-            }
-
-            public bool IsSatisfied()
-            {
-                return _allMeetingGroups != null &&
-                       _allMeetingGroups.Any(x => x.Id == _expectedMeetingGroupId);
-            }
-
-            public async Task SampleAsync()
-            {
-                _allMeetingGroups = await _meetingsModule.ExecuteQueryAsync(new GetAllMeetingGroupsQuery());
-            }
-
-            public string DescribeFailureTo()
-                => $"Meeting group with ID: {_expectedMeetingGroupId} is not created";
+            return _allMeetingGroups != null &&
+                   _allMeetingGroups.Any(x => x.Id == _expectedMeetingGroupId);
         }
 
-        private class GetMeetingGroupProposalFromAdministrationProbe : IProbe
+        public async Task SampleAsync()
         {
-            private readonly Guid _expectedMeetingGroupProposalId;
+            _allMeetingGroups = await _meetingsModule.ExecuteQueryAsync(new GetAllMeetingGroupsQuery());
+        }
 
-            private readonly IAdministrationModule _administrationModule;
+        public string DescribeFailureTo()
+            => $"Meeting group with ID: {_expectedMeetingGroupId} is not created";
+    }
 
-            private MeetingGroupProposalDto _meetingGroupProposal;
+    private class GetMeetingGroupProposalFromAdministrationProbe : IProbe
+    {
+        private readonly Guid _expectedMeetingGroupProposalId;
 
-            public GetMeetingGroupProposalFromAdministrationProbe(
-                Guid expectedMeetingGroupProposalId,
-                IAdministrationModule administrationModule)
+        private readonly IAdministrationModule _administrationModule;
+
+        private MeetingGroupProposalDto _meetingGroupProposal;
+
+        public GetMeetingGroupProposalFromAdministrationProbe(
+            Guid expectedMeetingGroupProposalId,
+            IAdministrationModule administrationModule)
+        {
+            _expectedMeetingGroupProposalId = expectedMeetingGroupProposalId;
+            _administrationModule = administrationModule;
+        }
+
+        public bool IsSatisfied()
+        {
+            if (_meetingGroupProposal == null)
             {
-                _expectedMeetingGroupProposalId = expectedMeetingGroupProposalId;
-                _administrationModule = administrationModule;
-            }
-
-            public bool IsSatisfied()
-            {
-                if (_meetingGroupProposal == null)
-                {
-                    return false;
-                }
-
-                if (_meetingGroupProposal.Id == _expectedMeetingGroupProposalId &&
-                    _meetingGroupProposal.StatusCode == MeetingGroupProposalStatus.ToVerify.Value)
-                {
-                    return true;
-                }
-
                 return false;
             }
 
-            public async Task SampleAsync()
+            if (_meetingGroupProposal.Id == _expectedMeetingGroupProposalId &&
+                _meetingGroupProposal.StatusCode == MeetingGroupProposalStatus.ToVerify.Value)
             {
-                try
-                {
-                    _meetingGroupProposal =
-                        await _administrationModule.ExecuteQueryAsync(
-                            new GetMeetingGroupProposalQuery(_expectedMeetingGroupProposalId));
-                }
-                catch
-                {
-                    // ignored
-                }
+                return true;
             }
 
-            public string DescribeFailureTo()
-                => $"Meeting group proposal with ID: {_expectedMeetingGroupProposalId} to verification not created";
+            return false;
         }
+
+        public async Task SampleAsync()
+        {
+            try
+            {
+                _meetingGroupProposal =
+                    await _administrationModule.ExecuteQueryAsync(
+                        new GetMeetingGroupProposalQuery(_expectedMeetingGroupProposalId));
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+
+        public string DescribeFailureTo()
+            => $"Meeting group proposal with ID: {_expectedMeetingGroupProposalId} to verification not created";
     }
 }

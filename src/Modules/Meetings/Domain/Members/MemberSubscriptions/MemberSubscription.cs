@@ -2,39 +2,38 @@
 using CompanyName.MyMeetings.BuildingBlocks.Domain;
 using CompanyName.MyMeetings.Modules.Meetings.Domain.Members.MemberSubscriptions.Events;
 
-namespace CompanyName.MyMeetings.Modules.Meetings.Domain.Members.MemberSubscriptions
+namespace CompanyName.MyMeetings.Modules.Meetings.Domain.Members.MemberSubscriptions;
+
+public class MemberSubscription : Entity, IAggregateRoot
 {
-    public class MemberSubscription : Entity, IAggregateRoot
+    public MemberSubscriptionId Id { get; private set; }
+
+    private DateTime _expirationDate;
+
+    private MemberSubscription()
     {
-        public MemberSubscriptionId Id { get; private set; }
+        // Only for EF.
+    }
 
-        private DateTime _expirationDate;
+    private MemberSubscription(MemberId memberId, DateTime expirationDate)
+    {
+        this.Id = new MemberSubscriptionId(memberId.Value);
+        _expirationDate = expirationDate;
 
-        private MemberSubscription()
-        {
-            // Only for EF.
-        }
+        this.AddDomainEvent(new MemberSubscriptionExpirationDateChangedDomainEvent(memberId, _expirationDate));
+    }
 
-        private MemberSubscription(MemberId memberId, DateTime expirationDate)
-        {
-            this.Id = new MemberSubscriptionId(memberId.Value);
-            _expirationDate = expirationDate;
+    public static MemberSubscription CreateForMember(MemberId memberId, DateTime expirationDate)
+    {
+        return new MemberSubscription(memberId, expirationDate);
+    }
 
-            this.AddDomainEvent(new MemberSubscriptionExpirationDateChangedDomainEvent(memberId, _expirationDate));
-        }
+    public void ChangeExpirationDate(DateTime expirationDate)
+    {
+        _expirationDate = expirationDate;
 
-        public static MemberSubscription CreateForMember(MemberId memberId, DateTime expirationDate)
-        {
-            return new MemberSubscription(memberId, expirationDate);
-        }
-
-        public void ChangeExpirationDate(DateTime expirationDate)
-        {
-            _expirationDate = expirationDate;
-
-            this.AddDomainEvent(new MemberSubscriptionExpirationDateChangedDomainEvent(
-                new MemberId(this.Id.Value),
-                _expirationDate));
-        }
+        this.AddDomainEvent(new MemberSubscriptionExpirationDateChangedDomainEvent(
+            new MemberId(this.Id.Value),
+            _expirationDate));
     }
 }

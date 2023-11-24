@@ -1,7 +1,6 @@
-﻿namespace CompanyName.MyMeetings.Modules.Payments.Domain.Users
+﻿namespace CompanyName.MyMeetings.Modules.Payments.Domain.Users;
+
+public interface IUserContext
 {
-    public interface IUserContext
-    {
-        UserId UserId { get; }
-    }
+    UserId UserId { get; }
 }

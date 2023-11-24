@@ -1,13 +1,12 @@
 ﻿using System.Data;
 
-namespace CompanyName.MyMeetings.BuildingBlocks.Application.Data
+namespace CompanyName.MyMeetings.BuildingBlocks.Application.Data;
+
+public interface ISqlConnectionFactory
 {
-    public interface ISqlConnectionFactory
-    {
-        IDbConnection GetOpenConnection();
+    IDbConnection GetOpenConnection();
 
-        IDbConnection CreateNewConnection();
+    IDbConnection CreateNewConnection();
 
-        string GetConnectionString();
-    }
+    string GetConnectionString();
 }

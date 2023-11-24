@@ -1,9 +1,8 @@
 ﻿using System;
 
-namespace CompanyName.MyMeetings.API.Modules.Meetings.Meetings
+namespace CompanyName.MyMeetings.API.Modules.Meetings.Meetings;
+
+public class SetMeetingHostRequest
 {
-    public class SetMeetingHostRequest
-    {
-        public Guid AttendeeId { get; set; }
-    }
+    public Guid AttendeeId { get; set; }
 }

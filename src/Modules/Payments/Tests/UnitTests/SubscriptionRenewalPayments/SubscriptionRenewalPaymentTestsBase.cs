@@ -7,52 +7,51 @@ using CompanyName.MyMeetings.Modules.Payments.Domain.SeedWork;
 using CompanyName.MyMeetings.Modules.Payments.Domain.Subscriptions;
 using CompanyName.MyMeetings.Modules.Payments.Domain.UnitTests.SeedWork;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Domain.UnitTests.SubscriptionRenewalPayments
+namespace CompanyName.MyMeetings.Modules.Payments.Domain.UnitTests.SubscriptionRenewalPayments;
+
+public class SubscriptionRenewalPaymentTestsBase : TestBase
 {
-    public class SubscriptionRenewalPaymentTestsBase : TestBase
+    protected class SubscriptionRenewalPaymentTestData
     {
-        protected class SubscriptionRenewalPaymentTestData
+        public SubscriptionRenewalPaymentTestData(PriceList priceList, PayerId payerId, SubscriptionId subscriptionId)
         {
-            public SubscriptionRenewalPaymentTestData(PriceList priceList, PayerId payerId, SubscriptionId subscriptionId)
-            {
-                PriceList = priceList;
-                PayerId = payerId;
-                SubscriptionId = subscriptionId;
-            }
-
-            internal PriceList PriceList { get; }
-
-            internal PayerId PayerId { get; }
-
-            internal SubscriptionId SubscriptionId { get; }
+            PriceList = priceList;
+            PayerId = payerId;
+            SubscriptionId = subscriptionId;
         }
 
-        protected SubscriptionRenewalPaymentTestData CreateSubscriptionRenewalPaymentTestData()
-        {
-            var payerId = new PayerId(Guid.NewGuid());
-            var subscriptionId = new SubscriptionId(Guid.NewGuid());
-            var priceList = CreatePriceList();
+        internal PriceList PriceList { get; }
 
-            var subscriptionRenewalPaymentTestData = new SubscriptionRenewalPaymentTestData(
-                priceList,
-                payerId,
-                subscriptionId);
+        internal PayerId PayerId { get; }
 
-            return subscriptionRenewalPaymentTestData;
-        }
+        internal SubscriptionId SubscriptionId { get; }
+    }
 
-        private PriceList CreatePriceList()
-        {
-            var priceListItem = new PriceListItemData(
-                "PL",
-                SubscriptionPeriod.Month,
-                MoneyValue.Of(60, "PLN"),
-                PriceListItemCategory.Renewal);
+    protected SubscriptionRenewalPaymentTestData CreateSubscriptionRenewalPaymentTestData()
+    {
+        var payerId = new PayerId(Guid.NewGuid());
+        var subscriptionId = new SubscriptionId(Guid.NewGuid());
+        var priceList = CreatePriceList();
 
-            var priceListItems = new List<PriceListItemData> { priceListItem };
-            var priceList = PriceList.Create(priceListItems, new DirectValueFromPriceListPricingStrategy(priceListItems));
+        var subscriptionRenewalPaymentTestData = new SubscriptionRenewalPaymentTestData(
+            priceList,
+            payerId,
+            subscriptionId);
 
-            return priceList;
-        }
+        return subscriptionRenewalPaymentTestData;
+    }
+
+    private PriceList CreatePriceList()
+    {
+        var priceListItem = new PriceListItemData(
+            "PL",
+            SubscriptionPeriod.Month,
+            MoneyValue.Of(60, "PLN"),
+            PriceListItemCategory.Renewal);
+
+        var priceListItems = new List<PriceListItemData> { priceListItem };
+        var priceList = PriceList.Create(priceListItems, new DirectValueFromPriceListPricingStrategy(priceListItems));
+
+        return priceList;
     }
 }

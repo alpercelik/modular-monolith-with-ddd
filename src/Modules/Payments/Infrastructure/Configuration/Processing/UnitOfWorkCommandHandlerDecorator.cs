@@ -6,36 +6,35 @@ using CompanyName.MyMeetings.Modules.Payments.Application.Configuration.Commands
 using CompanyName.MyMeetings.Modules.Payments.Application.Contracts;
 using MediatR;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Infrastructure.Configuration.Processing
+namespace CompanyName.MyMeetings.Modules.Payments.Infrastructure.Configuration.Processing;
+
+internal class UnitOfWorkCommandHandlerDecorator<T> : ICommandHandler<T>
+    where T : ICommand
 {
-    internal class UnitOfWorkCommandHandlerDecorator<T> : ICommandHandler<T>
-        where T : ICommand
+    private readonly ICommandHandler<T> _decorated;
+
+    private readonly IUnitOfWork _unitOfWork;
+
+    public UnitOfWorkCommandHandlerDecorator(
+        ICommandHandler<T> decorated,
+        IUnitOfWork unitOfWork)
     {
-        private readonly ICommandHandler<T> _decorated;
+        _decorated = decorated;
+        _unitOfWork = unitOfWork;
+    }
 
-        private readonly IUnitOfWork _unitOfWork;
+    public async Task<Unit> Handle(T command, CancellationToken cancellationToken)
+    {
+        await this._decorated.Handle(command, cancellationToken);
 
-        public UnitOfWorkCommandHandlerDecorator(
-            ICommandHandler<T> decorated,
-            IUnitOfWork unitOfWork)
+        Guid? internalCommandId = null;
+        if (command is InternalCommandBase)
         {
-            _decorated = decorated;
-            _unitOfWork = unitOfWork;
+            internalCommandId = command.Id;
         }
 
-        public async Task<Unit> Handle(T command, CancellationToken cancellationToken)
-        {
-            await this._decorated.Handle(command, cancellationToken);
+        await this._unitOfWork.CommitAsync(cancellationToken, internalCommandId);
 
-            Guid? internalCommandId = null;
-            if (command is InternalCommandBase)
-            {
-                internalCommandId = command.Id;
-            }
-
-            await this._unitOfWork.CommitAsync(cancellationToken, internalCommandId);
-
-            return Unit.Value;
-        }
+        return Unit.Value;
     }
 }

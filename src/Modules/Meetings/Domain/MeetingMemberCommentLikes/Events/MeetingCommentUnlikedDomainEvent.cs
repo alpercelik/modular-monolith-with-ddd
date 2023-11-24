@@ -2,18 +2,17 @@
 using CompanyName.MyMeetings.Modules.Meetings.Domain.Comments;
 using CompanyName.MyMeetings.Modules.Meetings.Domain.Members;
 
-namespace CompanyName.MyMeetings.Modules.Meetings.Domain.MeetingMemberCommentLikes.Events
+namespace CompanyName.MyMeetings.Modules.Meetings.Domain.MeetingMemberCommentLikes.Events;
+
+public class MeetingCommentUnlikedDomainEvent : DomainEventBase
 {
-    public class MeetingCommentUnlikedDomainEvent : DomainEventBase
+    public MeetingCommentId MeetingCommentId { get; }
+
+    public MemberId LikerId { get; }
+
+    public MeetingCommentUnlikedDomainEvent(MeetingCommentId meetingCommentId, MemberId likerId)
     {
-        public MeetingCommentId MeetingCommentId { get; }
-
-        public MemberId LikerId { get; }
-
-        public MeetingCommentUnlikedDomainEvent(MeetingCommentId meetingCommentId, MemberId likerId)
-        {
-            MeetingCommentId = meetingCommentId;
-            LikerId = likerId;
-        }
+        MeetingCommentId = meetingCommentId;
+        LikerId = likerId;
     }
 }

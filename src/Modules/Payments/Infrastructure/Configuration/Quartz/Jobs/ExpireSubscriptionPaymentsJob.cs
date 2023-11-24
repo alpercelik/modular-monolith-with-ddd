@@ -3,13 +3,12 @@ using CompanyName.MyMeetings.Modules.Payments.Application.Subscriptions.ExpireSu
 using CompanyName.MyMeetings.Modules.Payments.Infrastructure.Configuration.Processing;
 using Quartz;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Infrastructure.Configuration.Quartz.Jobs
+namespace CompanyName.MyMeetings.Modules.Payments.Infrastructure.Configuration.Quartz.Jobs;
+
+public class ExpireSubscriptionPaymentsJob : IJob
 {
-    public class ExpireSubscriptionPaymentsJob : IJob
+    public async Task Execute(IJobExecutionContext context)
     {
-        public async Task Execute(IJobExecutionContext context)
-        {
-            await CommandsExecutor.Execute(new ExpireSubscriptionPaymentsCommand());
-        }
+        await CommandsExecutor.Execute(new ExpireSubscriptionPaymentsCommand());
     }
 }

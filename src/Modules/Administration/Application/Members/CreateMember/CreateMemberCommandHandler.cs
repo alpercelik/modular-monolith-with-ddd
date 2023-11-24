@@ -6,30 +6,29 @@ using CompanyName.MyMeetings.Modules.Administration.Application.Configuration.Co
 using CompanyName.MyMeetings.Modules.Administration.Domain.Members;
 using MediatR;
 
-namespace CompanyName.MyMeetings.Modules.Administration.Application.Members
+namespace CompanyName.MyMeetings.Modules.Administration.Application.Members;
+
+internal class CreateMemberCommandHandler : ICommandHandler<CreateMemberCommand, Guid>
 {
-    internal class CreateMemberCommandHandler : ICommandHandler<CreateMemberCommand, Guid>
+    private readonly IMemberRepository _memberRepository;
+
+    public CreateMemberCommandHandler(IMemberRepository memberRepository)
     {
-        private readonly IMemberRepository _memberRepository;
+        _memberRepository = memberRepository;
+    }
 
-        public CreateMemberCommandHandler(IMemberRepository memberRepository)
-        {
-            _memberRepository = memberRepository;
-        }
+    public async Task<Guid> Handle(CreateMemberCommand request, CancellationToken cancellationToken)
+    {
+        var member = Member.Create(
+            request.MemberId,
+            request.Login,
+            request.Email,
+            request.FirstName,
+            request.LastName,
+            request.Name);
 
-        public async Task<Guid> Handle(CreateMemberCommand request, CancellationToken cancellationToken)
-        {
-            var member = Member.Create(
-                request.MemberId,
-                request.Login,
-                request.Email,
-                request.FirstName,
-                request.LastName,
-                request.Name);
+        await _memberRepository.AddAsync(member);
 
-            await _memberRepository.AddAsync(member);
-
-            return member.Id.Value;
-        }
+        return member.Id.Value;
     }
 }

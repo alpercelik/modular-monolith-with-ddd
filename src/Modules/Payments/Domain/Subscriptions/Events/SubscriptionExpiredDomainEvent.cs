@@ -1,20 +1,19 @@
 ﻿using System;
 using CompanyName.MyMeetings.BuildingBlocks.Domain;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Domain.Subscriptions.Events
+namespace CompanyName.MyMeetings.Modules.Payments.Domain.Subscriptions.Events;
+
+public class SubscriptionExpiredDomainEvent : DomainEventBase
 {
-    public class SubscriptionExpiredDomainEvent : DomainEventBase
+    public SubscriptionExpiredDomainEvent(
+        Guid subscriptionId,
+        string status)
     {
-        public SubscriptionExpiredDomainEvent(
-            Guid subscriptionId,
-            string status)
-        {
-            SubscriptionId = subscriptionId;
-            Status = status;
-        }
-
-        public Guid SubscriptionId { get; }
-
-        public string Status { get; }
+        SubscriptionId = subscriptionId;
+        Status = status;
     }
+
+    public Guid SubscriptionId { get; }
+
+    public string Status { get; }
 }

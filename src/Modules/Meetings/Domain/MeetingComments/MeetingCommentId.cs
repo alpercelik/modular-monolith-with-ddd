@@ -1,13 +1,12 @@
 ﻿using System;
 using CompanyName.MyMeetings.BuildingBlocks.Domain;
 
-namespace CompanyName.MyMeetings.Modules.Meetings.Domain.Comments
+namespace CompanyName.MyMeetings.Modules.Meetings.Domain.Comments;
+
+public class MeetingCommentId : TypedIdValueBase
 {
-    public class MeetingCommentId : TypedIdValueBase
+    public MeetingCommentId(Guid value)
+        : base(value)
     {
-        public MeetingCommentId(Guid value)
-            : base(value)
-        {
-        }
     }
 }

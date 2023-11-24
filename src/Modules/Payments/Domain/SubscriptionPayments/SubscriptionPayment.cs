@@ -7,97 +7,96 @@ using CompanyName.MyMeetings.Modules.Payments.Domain.SubscriptionPayments.Events
 using CompanyName.MyMeetings.Modules.Payments.Domain.SubscriptionPayments.Rules;
 using CompanyName.MyMeetings.Modules.Payments.Domain.Subscriptions;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Domain.SubscriptionPayments
+namespace CompanyName.MyMeetings.Modules.Payments.Domain.SubscriptionPayments;
+
+public class SubscriptionPayment : AggregateRoot
 {
-    public class SubscriptionPayment : AggregateRoot
+    private PayerId _payerId;
+
+    private SubscriptionPeriod _subscriptionPeriod;
+
+    private string _countryCode;
+
+    private SubscriptionPaymentStatus _subscriptionPaymentStatus;
+
+    private MoneyValue _value;
+
+    public static SubscriptionPayment Buy(
+        PayerId payerId,
+        SubscriptionPeriod period,
+        string countryCode,
+        MoneyValue priceOffer,
+        PriceList priceList)
     {
-        private PayerId _payerId;
+        var priceInPriceList = priceList.GetPrice(countryCode, period, PriceListItemCategory.New);
+        CheckRule(new PriceOfferMustMatchPriceInPriceListRule(priceOffer, priceInPriceList));
 
-        private SubscriptionPeriod _subscriptionPeriod;
+        var subscriptionPayment = new SubscriptionPayment();
 
-        private string _countryCode;
+        var subscriptionPaymentCreated = new SubscriptionPaymentCreatedDomainEvent(
+            Guid.NewGuid(),
+            payerId.Value,
+            period.Code,
+            countryCode,
+            SubscriptionPaymentStatus.WaitingForPayment.Code,
+            priceOffer.Value,
+            priceOffer.Currency);
 
-        private SubscriptionPaymentStatus _subscriptionPaymentStatus;
+        subscriptionPayment.Apply(subscriptionPaymentCreated);
+        subscriptionPayment.AddDomainEvent(subscriptionPaymentCreated);
 
-        private MoneyValue _value;
+        return subscriptionPayment;
+    }
 
-        public static SubscriptionPayment Buy(
-            PayerId payerId,
-            SubscriptionPeriod period,
-            string countryCode,
-            MoneyValue priceOffer,
-            PriceList priceList)
-        {
-            var priceInPriceList = priceList.GetPrice(countryCode, period, PriceListItemCategory.New);
-            CheckRule(new PriceOfferMustMatchPriceInPriceListRule(priceOffer, priceInPriceList));
+    public SubscriptionPaymentSnapshot GetSnapshot()
+    {
+        return new SubscriptionPaymentSnapshot(new SubscriptionPaymentId(this.Id), _payerId, _subscriptionPeriod, _countryCode);
+    }
 
-            var subscriptionPayment = new SubscriptionPayment();
+    public void MarkAsPaid()
+    {
+        SubscriptionPaymentPaidDomainEvent @event =
+            new SubscriptionPaymentPaidDomainEvent(
+                this.Id,
+                SubscriptionPaymentStatus.Paid.Code);
 
-            var subscriptionPaymentCreated = new SubscriptionPaymentCreatedDomainEvent(
-                Guid.NewGuid(),
-                payerId.Value,
-                period.Code,
-                countryCode,
-                SubscriptionPaymentStatus.WaitingForPayment.Code,
-                priceOffer.Value,
-                priceOffer.Currency);
+        this.Apply(@event);
+        this.AddDomainEvent(@event);
+    }
 
-            subscriptionPayment.Apply(subscriptionPaymentCreated);
-            subscriptionPayment.AddDomainEvent(subscriptionPaymentCreated);
+    public void Expire()
+    {
+        SubscriptionPaymentExpiredDomainEvent @event =
+            new SubscriptionPaymentExpiredDomainEvent(
+                this.Id,
+                SubscriptionPaymentStatus.Expired.Code);
 
-            return subscriptionPayment;
-        }
+        this.Apply(@event);
+        this.AddDomainEvent(@event);
+    }
 
-        public SubscriptionPaymentSnapshot GetSnapshot()
-        {
-            return new SubscriptionPaymentSnapshot(new SubscriptionPaymentId(this.Id), _payerId, _subscriptionPeriod, _countryCode);
-        }
+    protected override void Apply(IDomainEvent @event)
+    {
+        this.When((dynamic)@event);
+    }
 
-        public void MarkAsPaid()
-        {
-            SubscriptionPaymentPaidDomainEvent @event =
-                new SubscriptionPaymentPaidDomainEvent(
-                    this.Id,
-                    SubscriptionPaymentStatus.Paid.Code);
+    private void When(SubscriptionPaymentPaidDomainEvent @event)
+    {
+        _subscriptionPaymentStatus = SubscriptionPaymentStatus.Of(@event.Status);
+    }
 
-            this.Apply(@event);
-            this.AddDomainEvent(@event);
-        }
+    private void When(SubscriptionPaymentCreatedDomainEvent @event)
+    {
+        this.Id = @event.SubscriptionPaymentId;
+        _payerId = new PayerId(@event.PayerId);
+        _subscriptionPeriod = SubscriptionPeriod.Of(@event.SubscriptionPeriodCode);
+        _countryCode = @event.CountryCode;
+        _subscriptionPaymentStatus = SubscriptionPaymentStatus.Of(@event.Status);
+        _value = MoneyValue.Of(@event.Value, @event.Currency);
+    }
 
-        public void Expire()
-        {
-            SubscriptionPaymentExpiredDomainEvent @event =
-                new SubscriptionPaymentExpiredDomainEvent(
-                    this.Id,
-                    SubscriptionPaymentStatus.Expired.Code);
-
-            this.Apply(@event);
-            this.AddDomainEvent(@event);
-        }
-
-        protected override void Apply(IDomainEvent @event)
-        {
-            this.When((dynamic)@event);
-        }
-
-        private void When(SubscriptionPaymentPaidDomainEvent @event)
-        {
-            _subscriptionPaymentStatus = SubscriptionPaymentStatus.Of(@event.Status);
-        }
-
-        private void When(SubscriptionPaymentCreatedDomainEvent @event)
-        {
-            this.Id = @event.SubscriptionPaymentId;
-            _payerId = new PayerId(@event.PayerId);
-            _subscriptionPeriod = SubscriptionPeriod.Of(@event.SubscriptionPeriodCode);
-            _countryCode = @event.CountryCode;
-            _subscriptionPaymentStatus = SubscriptionPaymentStatus.Of(@event.Status);
-            _value = MoneyValue.Of(@event.Value, @event.Currency);
-        }
-
-        private void When(SubscriptionPaymentExpiredDomainEvent @event)
-        {
-            _subscriptionPaymentStatus = SubscriptionPaymentStatus.Of(@event.Status);
-        }
+    private void When(SubscriptionPaymentExpiredDomainEvent @event)
+    {
+        _subscriptionPaymentStatus = SubscriptionPaymentStatus.Of(@event.Status);
     }
 }

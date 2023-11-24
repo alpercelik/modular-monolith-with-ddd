@@ -10,78 +10,77 @@ using CompanyName.MyMeetings.BuildingBlocks.Infrastructure.Serialization;
 using MediatR;
 using Newtonsoft.Json;
 
-namespace CompanyName.MyMeetings.BuildingBlocks.Infrastructure.DomainEventsDispatching
+namespace CompanyName.MyMeetings.BuildingBlocks.Infrastructure.DomainEventsDispatching;
+
+public class DomainEventsDispatcher : IDomainEventsDispatcher
 {
-    public class DomainEventsDispatcher : IDomainEventsDispatcher
+    private readonly IMediator _mediator;
+
+    private readonly ILifetimeScope _scope;
+
+    private readonly IOutbox _outbox;
+
+    private readonly IDomainEventsAccessor _domainEventsProvider;
+
+    private readonly IDomainNotificationsMapper _domainNotificationsMapper;
+
+    public DomainEventsDispatcher(
+        IMediator mediator,
+        ILifetimeScope scope,
+        IOutbox outbox,
+        IDomainEventsAccessor domainEventsProvider,
+        IDomainNotificationsMapper domainNotificationsMapper)
     {
-        private readonly IMediator _mediator;
+        _mediator = mediator;
+        _scope = scope;
+        _outbox = outbox;
+        _domainEventsProvider = domainEventsProvider;
+        _domainNotificationsMapper = domainNotificationsMapper;
+    }
 
-        private readonly ILifetimeScope _scope;
+    public async Task DispatchEventsAsync()
+    {
+        var domainEvents = _domainEventsProvider.GetAllDomainEvents();
 
-        private readonly IOutbox _outbox;
-
-        private readonly IDomainEventsAccessor _domainEventsProvider;
-
-        private readonly IDomainNotificationsMapper _domainNotificationsMapper;
-
-        public DomainEventsDispatcher(
-            IMediator mediator,
-            ILifetimeScope scope,
-            IOutbox outbox,
-            IDomainEventsAccessor domainEventsProvider,
-            IDomainNotificationsMapper domainNotificationsMapper)
+        var domainEventNotifications = new List<IDomainEventNotification<IDomainEvent>>();
+        foreach (var domainEvent in domainEvents)
         {
-            _mediator = mediator;
-            _scope = scope;
-            _outbox = outbox;
-            _domainEventsProvider = domainEventsProvider;
-            _domainNotificationsMapper = domainNotificationsMapper;
+            Type domainEvenNotificationType = typeof(IDomainEventNotification<>);
+            var domainNotificationWithGenericType = domainEvenNotificationType.MakeGenericType(domainEvent.GetType());
+            var domainNotification = _scope.ResolveOptional(domainNotificationWithGenericType, new List<Parameter>
+            {
+                new NamedParameter("domainEvent", domainEvent),
+                new NamedParameter("id", domainEvent.Id)
+            });
+
+            if (domainNotification != null)
+            {
+                domainEventNotifications.Add(domainNotification as IDomainEventNotification<IDomainEvent>);
+            }
         }
 
-        public async Task DispatchEventsAsync()
+        _domainEventsProvider.ClearAllDomainEvents();
+
+        foreach (var domainEvent in domainEvents)
         {
-            var domainEvents = _domainEventsProvider.GetAllDomainEvents();
+            await _mediator.Publish(domainEvent);
+        }
 
-            var domainEventNotifications = new List<IDomainEventNotification<IDomainEvent>>();
-            foreach (var domainEvent in domainEvents)
+        foreach (var domainEventNotification in domainEventNotifications)
+        {
+            var type = _domainNotificationsMapper.GetName(domainEventNotification.GetType());
+            var data = JsonConvert.SerializeObject(domainEventNotification, new JsonSerializerSettings
             {
-                Type domainEvenNotificationType = typeof(IDomainEventNotification<>);
-                var domainNotificationWithGenericType = domainEvenNotificationType.MakeGenericType(domainEvent.GetType());
-                var domainNotification = _scope.ResolveOptional(domainNotificationWithGenericType, new List<Parameter>
-                {
-                    new NamedParameter("domainEvent", domainEvent),
-                    new NamedParameter("id", domainEvent.Id)
-                });
+                ContractResolver = new AllPropertiesContractResolver()
+            });
 
-                if (domainNotification != null)
-                {
-                    domainEventNotifications.Add(domainNotification as IDomainEventNotification<IDomainEvent>);
-                }
-            }
+            var outboxMessage = new OutboxMessage(
+                domainEventNotification.Id,
+                domainEventNotification.DomainEvent.OccurredOn,
+                type,
+                data);
 
-            _domainEventsProvider.ClearAllDomainEvents();
-
-            foreach (var domainEvent in domainEvents)
-            {
-                await _mediator.Publish(domainEvent);
-            }
-
-            foreach (var domainEventNotification in domainEventNotifications)
-            {
-                var type = _domainNotificationsMapper.GetName(domainEventNotification.GetType());
-                var data = JsonConvert.SerializeObject(domainEventNotification, new JsonSerializerSettings
-                {
-                    ContractResolver = new AllPropertiesContractResolver()
-                });
-
-                var outboxMessage = new OutboxMessage(
-                    domainEventNotification.Id,
-                    domainEventNotification.DomainEvent.OccurredOn,
-                    type,
-                    data);
-
-                _outbox.Add(outboxMessage);
-            }
+            _outbox.Add(outboxMessage);
         }
     }
 }

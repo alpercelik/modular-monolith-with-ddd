@@ -1,15 +1,14 @@
 ﻿using System;
 
-namespace CompanyName.MyMeetings.BuildingBlocks.Infrastructure.InternalCommands
+namespace CompanyName.MyMeetings.BuildingBlocks.Infrastructure.InternalCommands;
+
+public class InternalCommand
 {
-    public class InternalCommand
-    {
-        public Guid Id { get; set; }
+    public Guid Id { get; set; }
 
-        public string Type { get; set; }
+    public string Type { get; set; }
 
-        public string Data { get; set; }
+    public string Data { get; set; }
 
-        public DateTime? ProcessedDate { get; set; }
-    }
+    public DateTime? ProcessedDate { get; set; }
 }

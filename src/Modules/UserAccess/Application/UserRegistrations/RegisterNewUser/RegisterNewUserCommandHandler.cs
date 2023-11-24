@@ -6,37 +6,36 @@ using CompanyName.MyMeetings.Modules.UserAccess.Application.Configuration.Comman
 using CompanyName.MyMeetings.Modules.UserAccess.Domain.UserRegistrations;
 using MediatR;
 
-namespace CompanyName.MyMeetings.Modules.UserAccess.Application.UserRegistrations.RegisterNewUser
+namespace CompanyName.MyMeetings.Modules.UserAccess.Application.UserRegistrations.RegisterNewUser;
+
+internal class RegisterNewUserCommandHandler : ICommandHandler<RegisterNewUserCommand, Guid>
 {
-    internal class RegisterNewUserCommandHandler : ICommandHandler<RegisterNewUserCommand, Guid>
+    private readonly IUserRegistrationRepository _userRegistrationRepository;
+    private readonly IUsersCounter _usersCounter;
+
+    public RegisterNewUserCommandHandler(
+        IUserRegistrationRepository userRegistrationRepository,
+        IUsersCounter usersCounter)
     {
-        private readonly IUserRegistrationRepository _userRegistrationRepository;
-        private readonly IUsersCounter _usersCounter;
+        _userRegistrationRepository = userRegistrationRepository;
+        _usersCounter = usersCounter;
+    }
 
-        public RegisterNewUserCommandHandler(
-            IUserRegistrationRepository userRegistrationRepository,
-            IUsersCounter usersCounter)
-        {
-            _userRegistrationRepository = userRegistrationRepository;
-            _usersCounter = usersCounter;
-        }
+    public async Task<Guid> Handle(RegisterNewUserCommand command, CancellationToken cancellationToken)
+    {
+        var password = PasswordManager.HashPassword(command.Password);
 
-        public async Task<Guid> Handle(RegisterNewUserCommand command, CancellationToken cancellationToken)
-        {
-            var password = PasswordManager.HashPassword(command.Password);
+        var userRegistration = UserRegistration.RegisterNewUser(
+            command.Login,
+            password,
+            command.Email,
+            command.FirstName,
+            command.LastName,
+            _usersCounter,
+            command.ConfirmLink);
 
-            var userRegistration = UserRegistration.RegisterNewUser(
-                command.Login,
-                password,
-                command.Email,
-                command.FirstName,
-                command.LastName,
-                _usersCounter,
-                command.ConfirmLink);
+        await _userRegistrationRepository.AddAsync(userRegistration);
 
-            await _userRegistrationRepository.AddAsync(userRegistration);
-
-            return userRegistration.Id.Value;
-        }
+        return userRegistration.Id.Value;
     }
 }

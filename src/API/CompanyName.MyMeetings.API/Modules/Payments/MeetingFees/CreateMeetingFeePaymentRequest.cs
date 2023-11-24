@@ -1,9 +1,8 @@
 ﻿using System;
 
-namespace CompanyName.MyMeetings.API.Modules.Payments.MeetingFees
+namespace CompanyName.MyMeetings.API.Modules.Payments.MeetingFees;
+
+public class CreateMeetingFeePaymentRequest
 {
-    public class CreateMeetingFeePaymentRequest
-    {
-        public Guid MeetingFeeId { get; set; }
-    }
+    public Guid MeetingFeeId { get; set; }
 }

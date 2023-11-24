@@ -1,10 +1,9 @@
 ﻿using System;
 using MediatR;
 
-namespace CompanyName.MyMeetings.Modules.UserAccess.Application.Contracts
+namespace CompanyName.MyMeetings.Modules.UserAccess.Application.Contracts;
+
+public interface IQuery<out TResult> : IRequest<TResult>
 {
-    public interface IQuery<out TResult> : IRequest<TResult>
-    {
-        Guid Id { get; }
-    }
+    Guid Id { get; }
 }

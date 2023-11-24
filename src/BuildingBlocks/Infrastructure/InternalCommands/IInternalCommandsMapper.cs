@@ -1,11 +1,10 @@
 ﻿using System;
 
-namespace CompanyName.MyMeetings.BuildingBlocks.Infrastructure.InternalCommands
-{
-    public interface IInternalCommandsMapper
-    {
-        string GetName(Type type);
+namespace CompanyName.MyMeetings.BuildingBlocks.Infrastructure.InternalCommands;
 
-        Type GetType(string name);
-    }
+public interface IInternalCommandsMapper
+{
+    string GetName(Type type);
+
+    Type GetType(string name);
 }

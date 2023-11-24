@@ -1,15 +1,14 @@
-﻿namespace CompanyName.MyMeetings.Modules.Payments.Application.PriceListItems
+﻿namespace CompanyName.MyMeetings.Modules.Payments.Application.PriceListItems;
+
+public class PriceListItemDto
 {
-    public class PriceListItemDto
-    {
-        public string CountryCode { get; set; }
+    public string CountryCode { get; set; }
 
-        public string SubscriptionPeriodCode { get; set; }
+    public string SubscriptionPeriodCode { get; set; }
 
-        public decimal MoneyValue { get; set; }
+    public decimal MoneyValue { get; set; }
 
-        public string MoneyCurrency { get; set; }
+    public string MoneyCurrency { get; set; }
 
-        public string CategoryCode { get; set; }
-    }
+    public string CategoryCode { get; set; }
 }

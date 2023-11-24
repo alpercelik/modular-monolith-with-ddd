@@ -3,32 +3,31 @@ using System.Linq;
 using CompanyName.MyMeetings.BuildingBlocks.Domain;
 using NUnit.Framework;
 
-namespace CompanyName.MyMeetings.Modules.UserAccess.Domain.UnitTests.SeedWork
+namespace CompanyName.MyMeetings.Modules.UserAccess.Domain.UnitTests.SeedWork;
+
+public abstract class TestBase
 {
-    public abstract class TestBase
+    public static T AssertPublishedDomainEvent<T>(Entity aggregate)
+        where T : IDomainEvent
     {
-        public static T AssertPublishedDomainEvent<T>(Entity aggregate)
-            where T : IDomainEvent
+        var domainEvent = DomainEventsTestHelper.GetAllDomainEvents(aggregate).OfType<T>().SingleOrDefault();
+
+        if (domainEvent == null)
         {
-            var domainEvent = DomainEventsTestHelper.GetAllDomainEvents(aggregate).OfType<T>().SingleOrDefault();
-
-            if (domainEvent == null)
-            {
-                throw new Exception($"{typeof(T).Name} event not published");
-            }
-
-            return domainEvent;
+            throw new Exception($"{typeof(T).Name} event not published");
         }
 
-        public static void AssertBrokenRule<TRule>(TestDelegate testDelegate)
-            where TRule : class, IBusinessRule
+        return domainEvent;
+    }
+
+    public static void AssertBrokenRule<TRule>(TestDelegate testDelegate)
+        where TRule : class, IBusinessRule
+    {
+        var message = $"Expected {typeof(TRule).Name} broken rule";
+        var businessRuleValidationException = Assert.Catch<BusinessRuleValidationException>(testDelegate, message);
+        if (businessRuleValidationException != null)
         {
-            var message = $"Expected {typeof(TRule).Name} broken rule";
-            var businessRuleValidationException = Assert.Catch<BusinessRuleValidationException>(testDelegate, message);
-            if (businessRuleValidationException != null)
-            {
-                Assert.That(businessRuleValidationException.BrokenRule, Is.TypeOf<TRule>(), message);
-            }
+            Assert.That(businessRuleValidationException.BrokenRule, Is.TypeOf<TRule>(), message);
         }
     }
 }

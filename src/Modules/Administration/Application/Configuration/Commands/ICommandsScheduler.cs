@@ -1,10 +1,9 @@
 ﻿using System.Threading.Tasks;
 using CompanyName.MyMeetings.Modules.Administration.Application.Contracts;
 
-namespace CompanyName.MyMeetings.Modules.Administration.Application.Configuration.Commands
+namespace CompanyName.MyMeetings.Modules.Administration.Application.Configuration.Commands;
+
+public interface ICommandsScheduler
 {
-    public interface ICommandsScheduler
-    {
-        Task EnqueueAsync<T>(ICommand<T> command);
-    }
+    Task EnqueueAsync<T>(ICommand<T> command);
 }

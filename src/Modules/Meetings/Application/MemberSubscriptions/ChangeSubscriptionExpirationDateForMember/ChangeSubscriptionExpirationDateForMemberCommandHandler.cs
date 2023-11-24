@@ -4,32 +4,31 @@ using CompanyName.MyMeetings.Modules.Meetings.Application.Configuration.Commands
 using CompanyName.MyMeetings.Modules.Meetings.Domain.Members.MemberSubscriptions;
 using MediatR;
 
-namespace CompanyName.MyMeetings.Modules.Meetings.Application.MemberSubscriptions.ChangeSubscriptionExpirationDateForMember
+namespace CompanyName.MyMeetings.Modules.Meetings.Application.MemberSubscriptions.ChangeSubscriptionExpirationDateForMember;
+
+internal class ChangeSubscriptionExpirationDateForMemberCommandHandler : ICommandHandler<ChangeSubscriptionExpirationDateForMemberCommand>
 {
-    internal class ChangeSubscriptionExpirationDateForMemberCommandHandler : ICommandHandler<ChangeSubscriptionExpirationDateForMemberCommand>
+    private readonly IMemberSubscriptionRepository _memberSubscriptionRepository;
+
+    public ChangeSubscriptionExpirationDateForMemberCommandHandler(IMemberSubscriptionRepository memberSubscriptionRepository)
     {
-        private readonly IMemberSubscriptionRepository _memberSubscriptionRepository;
+        _memberSubscriptionRepository = memberSubscriptionRepository;
+    }
 
-        public ChangeSubscriptionExpirationDateForMemberCommandHandler(IMemberSubscriptionRepository memberSubscriptionRepository)
+    public async Task<Unit> Handle(ChangeSubscriptionExpirationDateForMemberCommand command, CancellationToken cancellationToken)
+    {
+        MemberSubscription memberSubscription = await _memberSubscriptionRepository.GetByIdOptionalAsync(new MemberSubscriptionId(command.MemberId.Value));
+
+        if (memberSubscription == null)
         {
-            _memberSubscriptionRepository = memberSubscriptionRepository;
+            memberSubscription = MemberSubscription.CreateForMember(command.MemberId, command.ExpirationDate);
+            await _memberSubscriptionRepository.AddAsync(memberSubscription);
+        }
+        else
+        {
+            memberSubscription.ChangeExpirationDate(command.ExpirationDate);
         }
 
-        public async Task<Unit> Handle(ChangeSubscriptionExpirationDateForMemberCommand command, CancellationToken cancellationToken)
-        {
-            MemberSubscription memberSubscription = await _memberSubscriptionRepository.GetByIdOptionalAsync(new MemberSubscriptionId(command.MemberId.Value));
-
-            if (memberSubscription == null)
-            {
-                memberSubscription = MemberSubscription.CreateForMember(command.MemberId, command.ExpirationDate);
-                await _memberSubscriptionRepository.AddAsync(memberSubscription);
-            }
-            else
-            {
-                memberSubscription.ChangeExpirationDate(command.ExpirationDate);
-            }
-
-            return Unit.Value;
-        }
+        return Unit.Value;
     }
 }

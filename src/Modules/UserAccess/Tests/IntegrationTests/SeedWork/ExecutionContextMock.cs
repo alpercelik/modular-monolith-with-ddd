@@ -1,24 +1,23 @@
 ﻿using System;
 using CompanyName.MyMeetings.BuildingBlocks.Application;
 
-namespace CompanyNames.MyMeetings.Modules.UserAccess.IntegrationTests.SeedWork
+namespace CompanyNames.MyMeetings.Modules.UserAccess.IntegrationTests.SeedWork;
+
+public class ExecutionContextMock : IExecutionContextAccessor
 {
-    public class ExecutionContextMock : IExecutionContextAccessor
+    public ExecutionContextMock(Guid userId)
     {
-        public ExecutionContextMock(Guid userId)
-        {
-            UserId = userId;
-        }
+        UserId = userId;
+    }
 
-        public Guid UserId { get; private set; }
+    public Guid UserId { get; private set; }
 
-        public Guid CorrelationId { get; }
+    public Guid CorrelationId { get; }
 
-        public bool IsAvailable { get; }
+    public bool IsAvailable { get; }
         
-        public void SetUserId(Guid userId)
-        {
-            this.UserId = userId;
-        }
+    public void SetUserId(Guid userId)
+    {
+        this.UserId = userId;
     }
 }

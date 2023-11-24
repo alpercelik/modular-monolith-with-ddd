@@ -11,64 +11,63 @@ using CompanyName.MyMeetings.Modules.Meetings.Domain.MeetingGroups.Policies;
 using Dapper;
 using MediatR;
 
-namespace CompanyName.MyMeetings.Modules.Meetings.Application.MemberSubscriptions
+namespace CompanyName.MyMeetings.Modules.Meetings.Application.MemberSubscriptions;
+
+public class MemberSubscriptionExpirationDateChangedNotificationHandler :
+    INotificationHandler<MemberSubscriptionExpirationDateChangedNotification>
 {
-    public class MemberSubscriptionExpirationDateChangedNotificationHandler :
-        INotificationHandler<MemberSubscriptionExpirationDateChangedNotification>
+    private readonly ISqlConnectionFactory _sqlConnectionFactory;
+
+    private readonly ICommandsScheduler _commandsScheduler;
+
+    public MemberSubscriptionExpirationDateChangedNotificationHandler(ISqlConnectionFactory sqlConnectionFactory, ICommandsScheduler commandsScheduler)
     {
-        private readonly ISqlConnectionFactory _sqlConnectionFactory;
+        _sqlConnectionFactory = sqlConnectionFactory;
+        _commandsScheduler = commandsScheduler;
+    }
 
-        private readonly ICommandsScheduler _commandsScheduler;
+    public async Task Handle(MemberSubscriptionExpirationDateChangedNotification notification, CancellationToken cancellationToken)
+    {
+        var sql = "SELECT " +
+                  $"[MeetingGroupMember].MeetingGroupId AS [{nameof(MeetingGroupMemberResponse.MeetingGroupId)}], " +
+                  $"[MeetingGroupMember].RoleCode AS [{nameof(MeetingGroupMemberResponse.RoleCode)}] " +
+                  "FROM [meetings].[v_MeetingGroupMembers] AS [MeetingGroupMember] " +
+                  "WHERE [MeetingGroupMember].MemberId = @MemberId";
 
-        public MemberSubscriptionExpirationDateChangedNotificationHandler(ISqlConnectionFactory sqlConnectionFactory, ICommandsScheduler commandsScheduler)
-        {
-            _sqlConnectionFactory = sqlConnectionFactory;
-            _commandsScheduler = commandsScheduler;
-        }
+        var connection = _sqlConnectionFactory.GetOpenConnection();
 
-        public async Task Handle(MemberSubscriptionExpirationDateChangedNotification notification, CancellationToken cancellationToken)
-        {
-            var sql = "SELECT " +
-                      $"[MeetingGroupMember].MeetingGroupId AS [{nameof(MeetingGroupMemberResponse.MeetingGroupId)}], " +
-                      $"[MeetingGroupMember].RoleCode AS [{nameof(MeetingGroupMemberResponse.RoleCode)}] " +
-                      "FROM [meetings].[v_MeetingGroupMembers] AS [MeetingGroupMember] " +
-                      "WHERE [MeetingGroupMember].MemberId = @MemberId";
-
-            var connection = _sqlConnectionFactory.GetOpenConnection();
-
-            var meetingGroupMembers = await connection.QueryAsync<MeetingGroupMemberResponse>(
-                sql,
-                new
-                {
-                    MemberId = notification.DomainEvent.MemberId.Value
-                });
-
-            var meetingGroupList = meetingGroupMembers.AsList();
-
-            List<MeetingGroupMemberData> meetingGroups = meetingGroupList
-                .Select(x =>
-                    new MeetingGroupMemberData(
-                        new MeetingGroupId(x.MeetingGroupId),
-                        MeetingGroupMemberRole.Of(x.RoleCode)))
-                .ToList();
-
-            var meetingGroupsCoveredByMemberSubscription =
-                MeetingGroupExpirationDatePolicy.GetMeetingGroupsCoveredByMemberSubscription(meetingGroups);
-
-            foreach (var meetingGroup in meetingGroupsCoveredByMemberSubscription)
+        var meetingGroupMembers = await connection.QueryAsync<MeetingGroupMemberResponse>(
+            sql,
+            new
             {
-                await _commandsScheduler.EnqueueAsync(new SetMeetingGroupExpirationDateCommand(
-                    Guid.NewGuid(),
-                    meetingGroup.Value,
-                    notification.DomainEvent.ExpirationDate));
-            }
-        }
+                MemberId = notification.DomainEvent.MemberId.Value
+            });
 
-        private class MeetingGroupMemberResponse
+        var meetingGroupList = meetingGroupMembers.AsList();
+
+        List<MeetingGroupMemberData> meetingGroups = meetingGroupList
+            .Select(x =>
+                new MeetingGroupMemberData(
+                    new MeetingGroupId(x.MeetingGroupId),
+                    MeetingGroupMemberRole.Of(x.RoleCode)))
+            .ToList();
+
+        var meetingGroupsCoveredByMemberSubscription =
+            MeetingGroupExpirationDatePolicy.GetMeetingGroupsCoveredByMemberSubscription(meetingGroups);
+
+        foreach (var meetingGroup in meetingGroupsCoveredByMemberSubscription)
         {
-            public Guid MeetingGroupId { get; set; }
-
-            public string RoleCode { get; set; }
+            await _commandsScheduler.EnqueueAsync(new SetMeetingGroupExpirationDateCommand(
+                Guid.NewGuid(),
+                meetingGroup.Value,
+                notification.DomainEvent.ExpirationDate));
         }
+    }
+
+    private class MeetingGroupMemberResponse
+    {
+        public Guid MeetingGroupId { get; set; }
+
+        public string RoleCode { get; set; }
     }
 }

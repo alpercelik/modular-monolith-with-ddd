@@ -8,76 +8,75 @@ using CompanyName.MyMeetings.Modules.Payments.Domain.Subscriptions.Events;
 using CompanyName.MyMeetings.Modules.Payments.Domain.UnitTests.SeedWork;
 using NUnit.Framework;
 
-namespace CompanyName.MyMeetings.Modules.Payments.Domain.UnitTests.Subscriptions
+namespace CompanyName.MyMeetings.Modules.Payments.Domain.UnitTests.Subscriptions;
+
+[TestFixture]
+public class SubscriptionTests : TestBase
 {
-    [TestFixture]
-    public class SubscriptionTests : TestBase
+    [Test]
+    public void CreateSubscription_IsSuccessful()
     {
-        [Test]
-        public void CreateSubscription_IsSuccessful()
-        {
-            // Arrange
-            var subscriptionPaymentSnapshot = new SubscriptionPaymentSnapshot(
-                new SubscriptionPaymentId(Guid.NewGuid()),
-                new PayerId(Guid.NewGuid()),
-                SubscriptionPeriod.Month,
-                "PL");
+        // Arrange
+        var subscriptionPaymentSnapshot = new SubscriptionPaymentSnapshot(
+            new SubscriptionPaymentId(Guid.NewGuid()),
+            new PayerId(Guid.NewGuid()),
+            SubscriptionPeriod.Month,
+            "PL");
 
-            // Act
-            var subscription = Subscription.Create(subscriptionPaymentSnapshot);
+        // Act
+        var subscription = Subscription.Create(subscriptionPaymentSnapshot);
 
-            // Assert
-            AssertPublishedDomainEvent<SubscriptionCreatedDomainEvent>(subscription);
-        }
+        // Assert
+        AssertPublishedDomainEvent<SubscriptionCreatedDomainEvent>(subscription);
+    }
 
-        [Test]
-        public void RenewSubscription_IsSuccessful()
-        {
-            // Arrange
-            var subscriptionPaymentSnapshot = new SubscriptionPaymentSnapshot(
-                new SubscriptionPaymentId(Guid.NewGuid()),
-                new PayerId(Guid.NewGuid()),
-                SubscriptionPeriod.Month,
-                "PL");
+    [Test]
+    public void RenewSubscription_IsSuccessful()
+    {
+        // Arrange
+        var subscriptionPaymentSnapshot = new SubscriptionPaymentSnapshot(
+            new SubscriptionPaymentId(Guid.NewGuid()),
+            new PayerId(Guid.NewGuid()),
+            SubscriptionPeriod.Month,
+            "PL");
 
-            var subscription = Subscription.Create(subscriptionPaymentSnapshot);
+        var subscription = Subscription.Create(subscriptionPaymentSnapshot);
 
-            var subscriptionRenewalPaymentSnapshot = new SubscriptionRenewalPaymentSnapshot(
-                new SubscriptionRenewalPaymentId(Guid.NewGuid()),
-                new PayerId(Guid.NewGuid()),
-                SubscriptionPeriod.Month,
-                "PL");
+        var subscriptionRenewalPaymentSnapshot = new SubscriptionRenewalPaymentSnapshot(
+            new SubscriptionRenewalPaymentId(Guid.NewGuid()),
+            new PayerId(Guid.NewGuid()),
+            SubscriptionPeriod.Month,
+            "PL");
 
-            // Act
-            subscription.Renew(subscriptionRenewalPaymentSnapshot);
+        // Act
+        subscription.Renew(subscriptionRenewalPaymentSnapshot);
 
-            // Assert
-            AssertPublishedDomainEvent<SubscriptionRenewedDomainEvent>(subscription);
-        }
+        // Assert
+        AssertPublishedDomainEvent<SubscriptionRenewedDomainEvent>(subscription);
+    }
 
-        [Test]
-        public void ExpireSubscription_IsSuccessful()
-        {
-            // Arrange
-            var referenceDate = DateTime.UtcNow;
+    [Test]
+    public void ExpireSubscription_IsSuccessful()
+    {
+        // Arrange
+        var referenceDate = DateTime.UtcNow;
 
-            SystemClock.Set(referenceDate);
+        SystemClock.Set(referenceDate);
 
-            var subscriptionPaymentSnapshot = new SubscriptionPaymentSnapshot(
-                new SubscriptionPaymentId(Guid.NewGuid()),
-                new PayerId(Guid.NewGuid()),
-                SubscriptionPeriod.Month,
-                "PL");
+        var subscriptionPaymentSnapshot = new SubscriptionPaymentSnapshot(
+            new SubscriptionPaymentId(Guid.NewGuid()),
+            new PayerId(Guid.NewGuid()),
+            SubscriptionPeriod.Month,
+            "PL");
 
-            var subscription = Subscription.Create(subscriptionPaymentSnapshot);
+        var subscription = Subscription.Create(subscriptionPaymentSnapshot);
 
-            SystemClock.Set(referenceDate.AddMonths(1).AddMilliseconds(1));
+        SystemClock.Set(referenceDate.AddMonths(1).AddMilliseconds(1));
 
-            // Act
-            subscription.Expire();
+        // Act
+        subscription.Expire();
 
-            // Assert
-            AssertPublishedDomainEvent<SubscriptionExpiredDomainEvent>(subscription);
-        }
+        // Assert
+        AssertPublishedDomainEvent<SubscriptionExpiredDomainEvent>(subscription);
     }
 }
